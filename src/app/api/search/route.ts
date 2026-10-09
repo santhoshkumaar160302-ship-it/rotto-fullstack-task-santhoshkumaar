@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getRecruiter } from "@/lib/auth";
 import { jsonError } from "@/lib/http";
 import { admin } from "@/lib/supabase/admin";
-import { FiltersSchema, type Filters } from "@/lib/search/filters";
+import { FiltersSchema, MentionsSchema } from "@/lib/search/filters";
 import { BriefParseError, MAX_BRIEF_LENGTH, parseBrief } from "@/lib/search/parse-brief";
 import { findCandidateIds, getPlan, saveSearch } from "@/lib/search/run-search";
 import { getCandidateSummaries, PAGE_SIZE } from "@/lib/search/candidates";
@@ -12,6 +12,7 @@ import { getCandidateSummaries, PAGE_SIZE } from "@/lib/search/candidates";
 const Body = z.object({
   brief: z.string().trim().min(1).max(MAX_BRIEF_LENGTH),
   filters: FiltersSchema.optional(),
+  mentions: MentionsSchema.optional(),
 });
 
 export async function POST(request: Request) {
@@ -36,9 +37,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const filters: Filters = body.data.filters ?? (await parseBrief(brief));
+        // Edited filters skip the LLM; the UI sends back the original mentions.
+    const { filters, mentions } = body.data.filters
+      ? { filters: body.data.filters, mentions: body.data.mentions ?? [] }
+      : await parseBrief(brief);
     const ids = await findCandidateIds(filters);
-    const searchId = await saveSearch(recruiter, brief, filters, ids);
+    const searchId = await saveSearch(recruiter, brief, filters, mentions, ids);
     const [results, plan] = await Promise.all([
       getCandidateSummaries(ids.slice(0, PAGE_SIZE)),
       getPlan(recruiter.companyId),
@@ -46,6 +50,7 @@ export async function POST(request: Request) {
     return Response.json({
       search_id: searchId,
       filters,
+      mentions,
       total: ids.length,
       results,
       searches_remaining: plan.searches_remaining,

@@ -88,3 +88,17 @@ export const EMPTY_FILTERS: Filters = {
   companies: [], schools: [], degrees: [], fields: [],
   min_years: null, max_years: null, open_to_work: null, unsupported: [],
 };
+// Which words of the brief produced which filter. Used only to highlight the
+// brief in the UI; never used to search.
+export const FILTER_KEYS = [
+  "roles", "seniorities", "cities", "skills", "company_types", "companies",
+  "schools", "degrees", "fields", "min_years", "max_years", "open_to_work",
+] as const;
+
+export const MentionSchema = z.object({
+  phrase: z.string().trim().min(1).max(100),
+  filter: z.enum(FILTER_KEYS),
+  values: z.array(z.string().max(100)).max(30),
+});
+export const MentionsSchema = z.array(MentionSchema).max(20);
+export type Mention = z.infer<typeof MentionSchema>;

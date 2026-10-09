@@ -25,7 +25,7 @@ export async function GET(
   // Read with the recruiter's own token: RLS hides other companies' searches.
   const { data: search, error } = await userClient(recruiter.token)
     .from("searches")
-    .select("id, brief, filters, result_ids")
+    .select("id, brief, filters, mentions, result_ids")
     .eq("id", search_id)
     .maybeSingle();
   if (error) return jsonError(500, "Something went wrong. Please try again.");
@@ -39,6 +39,7 @@ export async function GET(
     search_id: search.id,
     brief: search.brief,
     filters: search.filters,
+    mentions: search.mentions,
     page,
     page_size: PAGE_SIZE,
     total: ids.length,

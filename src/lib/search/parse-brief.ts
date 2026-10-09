@@ -4,7 +4,8 @@
 import { GoogleGenAI } from "@google/genai";
 import {
   CITIES, COMPANIES, COMPANY_TYPES, DEGREES, FIELDS, ROLES, SCHOOLS,
-  SENIORITIES, SKILLS, FiltersSchema, type Filters,
+  SENIORITIES, SKILLS, FILTER_KEYS, FiltersSchema, MentionSchema,
+  type Filters, type Mention,
 } from "./filters";
 
 // GEMINI_MODEL lets us compare models without editing code; the default is the one we ship.
@@ -37,10 +38,24 @@ const RESPONSE_SCHEMA = {
     max_years: { type: ["integer", "null"], minimum: 0, maximum: 60, description: "Maximum years of experience, or null." },
     open_to_work: { type: ["boolean", "null"], description: "true only if the brief asks for people who are open to work; otherwise null." },
     unsupported: { type: "array", items: { type: "string" }, description: "Short phrases for requirements no filter can express." },
+    mentions: {
+      type: "array",
+      description: "For each part of the brief that produced a filter: the exact words, the filter, and the values.",
+      items: {
+        type: "object",
+        properties: {
+          phrase: { type: "string", description: "Words copied exactly from the brief." },
+          filter: { type: "string", enum: [...FILTER_KEYS] },
+          values: { type: "array", items: { type: "string" } },
+        },
+        required: ["phrase", "filter", "values"],
+      },
+    },
   },
   required: [
     "roles", "seniorities", "cities", "skills", "company_types", "companies",
-    "schools", "degrees", "fields", "min_years", "max_years", "open_to_work", "unsupported",
+    "schools", "degrees", "fields", "min_years", "max_years", "open_to_work",
+    "unsupported", "mentions",
   ],
 };
 
@@ -136,6 +151,19 @@ OPEN TO WORK
 - true for "open to work", "looking for a new role", "actively looking",
   "available". Otherwise null.
 
+MENTIONS
+- For each part of the brief that produced a filter, add one entry to "mentions":
+  "phrase" = the exact words from the brief, copied character for character;
+  "filter" = the filter they set; "values" = the values they produced.
+- One phrase can produce several values: "engineers" -> roles, all engineer roles.
+- Several phrases can feed one filter: "Go and Kubernetes" -> one mention "Go"
+  (skills ["Go"]) and one mention "Kubernetes" (skills ["Kubernetes"]).
+- For min_years, max_years and open_to_work, values look like ["5"] or ["true"].
+- Never add mentions for unsupported requirements or for ignored text.
+- Keep each phrase as short as possible, and never use the same words for two
+  filters: "React engineers" -> "React" (skills) and "engineers" (roles);
+  "worked at a startup" -> "a startup" (company_types).
+
 EXAMPLES (fields not shown are empty lists or null)
 - "senior React engineers in New York who have worked at a startup" ->
   roles: all engineer roles, seniorities ["senior"], cities ["New York"],
@@ -162,7 +190,44 @@ function getClient(): GoogleGenAI {
 
 const unique = <T>(values: T[]) => [...new Set(values)];
 
-export async function parseBrief(brief: string): Promise<Filters> {
+export type ParsedBrief = { filters: Filters; mentions: Mention[] };
+
+const ARRAY_FILTERS = new Set([
+  "roles", "seniorities", "cities", "skills", "company_types", "companies",
+  "schools", "degrees", "fields",
+]);
+
+// Keeps a mention only if its phrase really is in the brief and its values are
+// in the validated filters. Anything else is dropped, never trusted.
+function cleanMentions(raw: unknown, brief: string, filters: Filters): Mention[] {
+  if (!Array.isArray(raw)) return [];
+  const lowerBrief = brief.toLowerCase();
+  const seen = new Set<string>();
+  const out: Mention[] = [];
+  // Check each mention on its own, so one malformed item doesn't drop the rest.
+  const items = raw.slice(0, 20).flatMap((item) => {
+    const one = MentionSchema.safeParse(item);
+    return one.success ? [one.data] : [];
+  });
+  for (const m of items) {
+    const key = `${m.filter}:${m.phrase.toLowerCase()}`;
+    if (seen.has(key) || !lowerBrief.includes(m.phrase.toLowerCase())) continue;
+    let values: string[];
+    if (ARRAY_FILTERS.has(m.filter)) {
+      const current = filters[m.filter as keyof Filters] as string[];
+      values = m.values.filter((v) => current.includes(v));
+    } else {
+      const value = filters[m.filter as keyof Filters];
+      values = value === null ? [] : [String(value)];
+    }
+    if (values.length === 0) continue;
+    seen.add(key);
+    out.push({ phrase: m.phrase, filter: m.filter, values });
+  }
+  return out;
+}
+
+export async function parseBrief(brief: string): Promise<ParsedBrief> {
   const text = brief.trim().slice(0, MAX_BRIEF_LENGTH);
 
   const interaction = await getClient().interactions.create({
@@ -193,7 +258,7 @@ export async function parseBrief(brief: string): Promise<Filters> {
   }
 
   const f = result.data;
-  return {
+  const filters: Filters = {
     ...f,
     roles: unique(f.roles),
     seniorities: unique(f.seniorities),
@@ -206,4 +271,6 @@ export async function parseBrief(brief: string): Promise<Filters> {
     fields: unique(f.fields),
     unsupported: unique(f.unsupported),
   };
+  const mentions = cleanMentions((raw as Record<string, unknown>).mentions, text, filters);
+  return { filters, mentions };
 }

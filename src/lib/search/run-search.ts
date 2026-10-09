@@ -2,7 +2,7 @@
 import "server-only";
 import { admin } from "../supabase/admin";
 import type { Recruiter } from "../auth";
-import type { Filters } from "./filters";
+import type { Filters, Mention} from "./filters";
 
 // True if the filters ask for anything at all.
 export function hasCriteria(f: Filters): boolean {
@@ -25,8 +25,9 @@ export async function findCandidateIds(filters: Filters): Promise<string[]> {
 }
 
 // Saves the ordered result ids once, so paging never re-runs the search.
+// Saves the ordered result ids once, so paging never re-runs the search.
 export async function saveSearch(
-  recruiter: Recruiter, brief: string, filters: Filters, ids: string[],
+  recruiter: Recruiter, brief: string, filters: Filters, mentions: Mention[], ids: string[],
 ): Promise<string> {
   const { data, error } = await admin
     .from("searches")
@@ -35,6 +36,7 @@ export async function saveSearch(
       created_by: recruiter.userId,
       brief,
       filters,
+      mentions,
       result_ids: ids,
     })
     .select("id")

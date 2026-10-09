@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { getRecruiter } from "@/lib/auth";
 import { jsonError } from "@/lib/http";
-import { EMPTY_FILTERS, FiltersSchema } from "@/lib/search/filters";
+import { EMPTY_FILTERS, FiltersSchema, MentionsSchema } from "@/lib/search/filters";
 import { MAX_BRIEF_LENGTH } from "@/lib/search/parse-brief";
 import { userClient } from "@/lib/supabase/user";
 
@@ -14,6 +14,7 @@ const Body = z.object({
   brief: z.string().trim().min(1).max(MAX_BRIEF_LENGTH),
   // Any filter left out means "no filter"; values must still be allowed ones.
   filters: FiltersSchema.partial(),
+  mentions: MentionsSchema.optional(),
 });
 
 export async function GET(request: Request) {
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await userClient(recruiter.token)
     .from("saved_briefs")
-    .select("id, brief, filters, created_at")
+    .select("id, brief, filters, mentions, created_at")
     .order("created_at", { ascending: false });
   if (error) {
     console.error("Listing saved searches failed:", error);
@@ -43,7 +44,11 @@ export async function POST(request: Request) {
   // company_id is filled in by the database from the signed-in recruiter.
   const { data, error } = await userClient(recruiter.token)
     .from("saved_briefs")
-    .insert({ brief: body.data.brief, filters: { ...EMPTY_FILTERS, ...body.data.filters } })
+        .insert({
+      brief: body.data.brief,
+      filters: { ...EMPTY_FILTERS, ...body.data.filters },
+      mentions: body.data.mentions ?? [],
+    })
     .select("id, brief, filters, created_at")
     .single();
   if (error) {
