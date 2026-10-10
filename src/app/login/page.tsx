@@ -22,14 +22,6 @@ import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import demoData from "./demo-data.json";
 
-// The two seeded accounts from the brief. The password is public in the brief,
-// so it is not a secret; it only saves graders some typing.
-const DEMO_PASSWORD = "rotto-assessment";
-const DEMO_ACCOUNTS = [
-  { email: "recruiter@acme.test", label: "Acme recruiter", initial: "A", bg: "#DCE6FF", fg: "#1E3A8A" },
-  { email: "recruiter@globex.test", label: "Globex recruiter", initial: "G", bg: "var(--ink)", fg: "var(--sheet)" },
-];
-
 // ---------- Demo data ----------
 type DemoData = {
   total: number;
@@ -419,29 +411,6 @@ export default function LoginPage() {
             <button className="btn login-submit" type="submit" disabled={busy}>
               {busy ? "Signing in…" : "Sign in"}
             </button>
-
-            <div className="login-or">Or use a demo account</div>
-            <div className="login-accounts">
-              {DEMO_ACCOUNTS.map((account) => (
-                <button
-                  key={account.email}
-                  type="button"
-                  className="btn-quiet login-account"
-                  disabled={busy}
-                  onClick={() => signIn(account.email, DEMO_PASSWORD)}
-                >
-                  <span className="pic" style={{ width: 36, height: 36, borderRadius: 10, background: account.bg, color: account.fg }}>
-                    {account.initial}
-                  </span>
-                  <span className="login-account-text">
-                    <span style={{ fontWeight: 600 }}>{account.label}</span>
-                    <span className="muted" style={{ fontSize: 13 }}>
-                      {account.email}
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </div>
           </form>
         </div>
       </div>
