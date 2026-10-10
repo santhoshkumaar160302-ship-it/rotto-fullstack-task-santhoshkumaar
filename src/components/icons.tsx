@@ -7,9 +7,14 @@ export const SearchIcon = () => (
     <path d="M20 20l-4.2-4.2" />
   </svg>
 );
-export const ShortlistIcon = () => (
-  <svg {...base}>
+export const ShortlistIcon = ({ filled = false }: { filled?: boolean }) => (
+  <svg {...base} fill={filled ? "currentColor" : "none"}>
     <path d="M6.5 3.5h11v17l-5.5-4-5.5 4z" />
+  </svg>
+);
+export const CloseIcon = () => (
+  <svg {...base}>
+    <path d="M6 6l12 12M18 6L6 18" />
   </svg>
 );
 export const SavedIcon = () => (

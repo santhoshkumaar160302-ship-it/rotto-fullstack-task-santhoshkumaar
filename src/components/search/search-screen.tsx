@@ -3,7 +3,7 @@
 // so reloading, going back or sharing the link shows the same results, and
 // paging only reads the saved results: it never uses up a search. A corrected
 // search also carries the original (&from=…), so the brief can show what changed.
-import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { usePlan } from "@/lib/plan";
@@ -12,6 +12,8 @@ import { MarkedBrief } from "./marked-brief";
 import { ResultRow } from "./result-row";
 import { FILTER_LABELS, filterValues, type FilterKey, type Filters, type Mention, type NewSearch, type SearchPage } from "./types";
 import { phraseFor, valuesOf, withValues } from "./filter-edit";
+import { ProfilePanel } from "./profile-panel";
+import Link from "next/link";
 
 const PAGE_SIZE = 20;
 const MAX_BRIEF = 500;
@@ -137,6 +139,7 @@ export function SearchScreen() {
       const base = original ?? current;
       return (
         <Results
+          key={current.search_id}
           data={current}
           original={base}
           problem={problem}
@@ -350,6 +353,19 @@ function Results({
     .filter((key) => valuesOf(data.filters, key).length > 0)
     .sort((x, y) => Number(isNew(y)) - Number(isNew(x)));
   const hasCriteria = (Object.keys(FILTER_LABELS) as FilterKey[]).some((key) => filterValues(data.filters, key).length > 0);
+  const [openId, setOpenId] = useState<string | null>(null); // whose profile is open
+  const closeProfile = useCallback(() => setOpenId(null), []);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  async function saveSearch() {
+    setSaveState("saving");
+    try {
+      await api("/api/saved-briefs", { method: "POST", body: { brief: data.brief, filters: data.filters, mentions: original.mentions } });
+      setSaveState("saved");
+    } catch {
+      setSaveState("error");
+    }
+  }
   const from = (data.page - 1) * data.page_size + 1;
   const to = from + data.results.length - 1;
 
@@ -423,15 +439,32 @@ function Results({
             <span className="display results-count">
               {data.total.toLocaleString("en-US")} {data.total === 1 ? "person" : "people"}
             </span>
-            {data.total_pages > 1 && (
-              <span className="muted">
-                {from}–{to} of {data.total}
-              </span>
-            )}
+            <span className="results-head-right">
+              {data.total_pages > 1 && (
+                <span className="muted">
+                  {from}–{to} of {data.total}
+                </span>
+              )}
+              {saveState === "saved" ? (
+                <Link href="/saved" className="btn-quiet shorted">
+                  Saved ✓ View saved searches
+                </Link>
+              ) : (
+                <button className="btn-quiet" onClick={saveSearch} disabled={saveState === "saving"}>
+                  <SaveIcon /> {saveState === "saving" ? "Saving…" : saveState === "error" ? "Try saving again" : "Save search"}
+                </button>
+              )}
+            </span>
           </div>
           <div className="sheet result-list">
             {data.results.map((person) => (
-              <ResultRow key={person.id} person={person} filters={data.filters} />
+              <ResultRow
+                key={person.id}
+                person={person}
+                filters={data.filters}
+                selected={openId === person.id}
+                onOpen={() => setOpenId(person.id)}
+              />
             ))}
           </div>
           {data.total_pages > 1 && (
@@ -449,9 +482,17 @@ function Results({
           )}
         </>
       )}
+      {openId && <ProfilePanel personId={openId} filters={data.filters} onClose={closeProfile} />}
     </section>
   );
 }
+
+const SaveIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.6" />
+    <path d="M4 4v4.6h4.6" />
+  </svg>
+);
 
 function StateCard({ title, body, actions }: { title: string; body: string; actions: React.ReactNode }) {
   return (

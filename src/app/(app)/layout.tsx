@@ -5,6 +5,7 @@
 import type { ReactNode } from "react";
 import { SessionContext, useRequireSession } from "@/lib/use-session";
 import { PlanProvider } from "@/lib/plan";
+import { ShortlistProvider } from "@/lib/shortlist-store";
 import { AppShell } from "@/components/app-shell";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
@@ -12,7 +13,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <SessionContext.Provider value={session}>
       <PlanProvider>
-        <AppShell>{children}</AppShell>
+        <ShortlistProvider>
+          <AppShell>{children}</AppShell>
+        </ShortlistProvider>
       </PlanProvider>
     </SessionContext.Provider>
   );

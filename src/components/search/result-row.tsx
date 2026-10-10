@@ -1,5 +1,6 @@
 // One person in the results. Facts that match the search are marked with the highlighter.
 import type { CandidateSummary, Filters } from "./types";
+import { ShortlistButton } from "./shortlist-button";
 
 function initials(name: string) {
   return name
@@ -42,7 +43,7 @@ export function Avatar({ person, size }: { person: Pick<CandidateSummary, "full_
   );
 }
 
-export function ResultRow({ person, filters }: { person: CandidateSummary; filters: Filters }) {
+export function ResultRow({ person, filters, onOpen, selected }: { person: CandidateSummary; filters: Filters; onOpen: () => void; selected: boolean }) {
   // The filter lists hold exact allowed values; compare them as plain text here.
   const roles: readonly string[] = filters.roles;
   const cities: readonly string[] = filters.cities;
@@ -60,11 +61,20 @@ export function ResultRow({ person, filters }: { person: CandidateSummary; filte
   const skills = [...person.skills].sort((a, b) => Number(wantedSkills.includes(b)) - Number(wantedSkills.includes(a)));
 
   return (
-    <article className="result">
+    <article className={selected ? "result result-open" : "result"} onClick={onOpen}>
       <Avatar person={person} size={48} />
       <div className="result-main">
         <div className="result-head">
-          <span className="display result-name">{person.full_name}</span>
+          <button
+            type="button"
+            className="display result-name"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen();
+            }}
+          >
+            {person.full_name}
+          </button>
           {person.open_to_work && (
             <span className={filters.open_to_work ? "otw mk" : "otw"}>
               <i aria-hidden="true" /> Open to work
@@ -91,6 +101,7 @@ export function ResultRow({ person, filters }: { person: CandidateSummary; filte
           {skills.length > 6 && <span className="skill muted">+{skills.length - 6}</span>}
         </div>
       </div>
+      <ShortlistButton personId={person.id} personName={person.full_name} />
     </article>
   );
 }
