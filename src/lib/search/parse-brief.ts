@@ -227,7 +227,7 @@ function cleanMentions(raw: unknown, brief: string, filters: Filters): Mention[]
   return out;
 }
 
-export async function parseBrief(brief: string): Promise<ParsedBrief> {
+async function parseBriefOnce(brief: string): Promise<ParsedBrief> {
   const text = brief.trim().slice(0, MAX_BRIEF_LENGTH);
 
   const interaction = await getClient().interactions.create({
@@ -273,4 +273,53 @@ export async function parseBrief(brief: string): Promise<ParsedBrief> {
   };
   const mentions = cleanMentions((raw as Record<string, unknown>).mentions, text, filters);
   return { filters, mentions };
+}
+// ---------- Waiting for the model ----------
+// Gemini usually answers in 1–2.5 s, but now and then a request hangs for 30 s
+// or more. So if there's no answer after 2 s we send an identical backup request
+// and use whichever answers first; after 9 s we give up so the recruiter can try
+// again (the route refunds the search). A backup costs about $0.0007 and only
+// happens on the slow ones. What we ask and how the answer is checked don't change.
+const BACKUP_AFTER_MS = 2000;
+const GIVE_UP_AFTER_MS = 9000;
+
+export function parseBrief(brief: string): Promise<Awaited<ReturnType<typeof parseBriefOnce>>> {
+  return new Promise((resolve, reject) => {
+    let started = 0;
+    let failed = 0;
+    let done = false;
+    let firstError: unknown;
+    const finish = (settle: () => void) => {
+      if (done) return;
+      done = true;
+      clearTimeout(backupTimer);
+      clearTimeout(giveUpTimer);
+      settle();
+    };
+    const attempt = () => {
+      started += 1;
+      parseBriefOnce(brief).then(
+        (parsed) => finish(() => resolve(parsed)),
+        (error: unknown) => {
+          firstError ??= error;
+          failed += 1;
+          if (started < 2) {
+            // The first one failed quickly: try the backup right away.
+            clearTimeout(backupTimer);
+            attempt();
+          } else if (failed === started) {
+            finish(() => reject(firstError));
+          }
+        },
+      );
+    };
+    const backupTimer = setTimeout(() => {
+      if (started < 2) attempt();
+    }, BACKUP_AFTER_MS);
+    const giveUpTimer = setTimeout(
+      () => finish(() => reject(new Error("The language model took too long to answer."))),
+      GIVE_UP_AFTER_MS,
+    );
+    attempt();
+  });
 }

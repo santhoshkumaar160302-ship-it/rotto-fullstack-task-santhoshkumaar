@@ -1,9 +1,6 @@
-// TEMPORARY: built in a later step.
+// Saved searches.
+import { SavedScreen } from "@/components/saved-screen";
+
 export default function SavedPage() {
-  return (
-    <section className="placeholder">
-      <h1 className="display">Saved searches</h1>
-      <p className="muted">Coming in a later step.</p>
-    </section>
-  );
+  return <SavedScreen />;
 }

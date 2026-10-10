@@ -11,4 +11,5 @@ setup:
 
 # Serves the app on http://localhost:3000
 dev:
+	node scripts/warm-up.mts &
 	npm run dev

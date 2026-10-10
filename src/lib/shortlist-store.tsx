@@ -13,6 +13,8 @@ type Store = {
   create: (name: string) => Promise<Shortlist>;
   add: (listId: string, personId: string) => Promise<void>;
   remove: (listId: string, personId: string) => Promise<void>;
+  rename: (listId: string, name: string) => Promise<void>;
+  removeList: (listId: string) => Promise<void>;
 };
 
 const ShortlistContext = createContext<Store | null>(null);
@@ -60,6 +62,14 @@ export function ShortlistProvider({ children }: { children: ReactNode }) {
     },
     add: (listId, personId) => change(listId, personId, true),
     remove: (listId, personId) => change(listId, personId, false),
+    rename: async (listId, name) => {
+      await api(`/api/shortlists/${listId}`, { method: "PATCH", body: { name } });
+      setLists((now) => (now ?? []).map((l) => (l.id === listId ? { ...l, name } : l)));
+    },
+    removeList: async (listId) => {
+      await api(`/api/shortlists/${listId}`, { method: "DELETE" });
+      setLists((now) => (now ?? []).filter((l) => l.id !== listId));
+    },
   };
 
   return <ShortlistContext.Provider value={store}>{children}</ShortlistContext.Provider>;

@@ -1,9 +1,11 @@
-// TEMPORARY: built in a later step.
+// Shortlists. Suspense is needed because the screen reads the address (?list=…).
+import { Suspense } from "react";
+import { ShortlistsScreen } from "@/components/shortlists-screen";
+
 export default function ShortlistsPage() {
   return (
-    <section className="placeholder">
-      <h1 className="display">Shortlists</h1>
-      <p className="muted">Coming in a later step.</p>
-    </section>
+    <Suspense>
+      <ShortlistsScreen />
+    </Suspense>
   );
 }
