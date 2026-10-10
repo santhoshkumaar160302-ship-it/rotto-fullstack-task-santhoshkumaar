@@ -31,6 +31,13 @@ export async function api<T>(path: string, options: { method?: string; body?: un
     throw new ApiError(0, "We couldn't reach the server. Check your connection and try again.");
   }
 
+  // 401 means the saved sign-in is no longer valid (for example after the
+  // database was reset): forget it, and the app sends you to the sign-in page.
+  if (res.status === 401) {
+    await supabaseBrowser().auth.signOut({ scope: "local" }).catch(() => {});
+    throw new ApiError(401, "Your session ended. Sign in again.");
+  }
+
   const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {
     const message = typeof json.error === "string" ? json.error : "Something went wrong. Please try again.";

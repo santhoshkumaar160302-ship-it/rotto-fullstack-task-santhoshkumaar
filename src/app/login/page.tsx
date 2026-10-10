@@ -18,6 +18,7 @@ import {
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import demoData from "./demo-data.json";
 
 // The two seeded accounts from the brief. The password is public in the brief,
@@ -341,9 +342,14 @@ export default function LoginPage() {
       {!phone && <FaceWall brief={moment.brief} marked={moment.marked} phase={moment.phase} />}
 
       <div className="login-inner">
-        <div className="login-brand" data-wall="text">
-          <Logo /> Candidate search
-        </div>
+        <header className="login-top">
+          <div className="login-brand" data-wall="text">
+            <Logo /> Candidate search
+          </div>
+          <div data-wall="text">
+            <ThemeToggle />
+          </div>
+        </header>
 
         <div className="login-main">
           <section className="login-hero">

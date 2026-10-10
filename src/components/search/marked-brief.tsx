@@ -17,8 +17,14 @@ function splitBrief(brief: string, mentions: Mention[], unsupported: string[]): 
   const lower = brief.toLowerCase();
   const spans: { start: number; end: number; mention?: Mention; unsupported?: string }[] = [];
   for (const mention of mentions) {
-    const start = lower.indexOf(mention.phrase.toLowerCase());
-    if (start >= 0) spans.push({ start, end: start + mention.phrase.length, mention });
+    let start = lower.indexOf(mention.phrase.toLowerCase());
+    if (start < 0) continue;
+    const end = start + mention.phrase.length;
+    // "worked at a startup": keep the "a" with the phrase, so a change reads
+    // "~~a startup~~ an enterprise" rather than "a ~~startup~~ an enterprise".
+    const article = mention.filter === "company_types" ? /\ban? $/i.exec(lower.slice(0, start)) : null;
+    if (article) start -= article[0].length;
+    spans.push({ start, end, mention });
   }
   for (const phrase of unsupported) {
     const start = lower.indexOf(phrase.toLowerCase());

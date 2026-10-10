@@ -507,3 +507,5 @@ a.btn-quiet { text-decoration: none; }
   .page-title { font-size: 28px; }
   .saved-brief { font-size: 20px; }
 }
+/* ---------- Polish ---------- */
+.login-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
