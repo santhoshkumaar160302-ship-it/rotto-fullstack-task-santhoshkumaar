@@ -509,3 +509,32 @@ a.btn-quiet { text-decoration: none; }
 }
 /* ---------- Polish ---------- */
 .login-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+/* ---------- Sharing shortlists ---------- */
+.nav-icon { position: relative; display: inline-flex; }
+.nav-badge {
+  position: absolute; top: -6px; right: -10px; min-width: 18px; height: 18px; box-sizing: border-box; padding: 0 5px;
+  border-radius: 9px; background: var(--red); color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;
+  box-shadow: 0 0 0 2px var(--sheet);
+}
+.invites { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.invite { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; max-width: none; border-left: 3px solid var(--hl); }
+.invite-problem { display: block; margin-top: 4px; color: var(--red); }
+.list-group { margin: 10px 12px 2px; font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--faint); }
+.list-group:first-child { margin-top: 0; }
+.list-link-from { display: block; font-size: 12px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; }
+.send-panel { max-width: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.send-form { display: flex; align-items: center; gap: 10px 12px; flex-wrap: wrap; }
+.send-form label { font-weight: 600; }
+.send-row { display: flex; gap: 8px; flex: 1 1 280px; min-width: 0; }
+.send-row select { flex: 1 1 auto; min-width: 0; }
+.send-close { margin-left: auto; }
+.send-note { margin: 0; font-size: 13px; }
+.send-ok { padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); font-size: 14px; }
+.recipients { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.recipients li { display: flex; justify-content: space-between; gap: 12px; padding-top: 6px; border-top: 1px solid var(--rule); }
+.recipient-accepted { color: var(--ok); }
+
+/* Chips grow to fit long values instead of spilling over each other. */
+.chip { display: inline-block; height: auto; min-height: 32px; max-width: 100%; box-sizing: border-box; padding: 6px 12px; border-radius: 16px; line-height: 1.35; }
+.chip strong { overflow-wrap: anywhere; }
+.chip-more { margin-left: 6px; padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--pencil); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }

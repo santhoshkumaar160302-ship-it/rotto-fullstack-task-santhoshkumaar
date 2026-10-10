@@ -106,9 +106,7 @@ export function SavedScreen() {
               </p>
               <div className="brief-extra">
                 {keys.map((key) => (
-                  <span key={key} className="chip">
-                    {FILTER_LABELS[key]}: <strong>{filterValues(item.filters, key).join(", ")}</strong>
-                  </span>
+                  <FilterChip key={key} label={FILTER_LABELS[key]} values={filterValues(item.filters, key)} />
                 ))}
               </div>
               <div className="saved-foot">
@@ -138,5 +136,23 @@ export function SavedScreen() {
         })}
       </div>
     </section>
+  );
+}
+
+// One filter, e.g. "Role: Backend Engineer +6 more". A long list shows its
+// first value and a button that expands it to all of them (works on phones,
+// where there is no hover).
+function FilterChip({ label, values }: { label: string; values: string[] }) {
+  const [open, setOpen] = useState(false);
+  const long = values.length > 3;
+  return (
+    <span className="chip">
+      {label}: <strong>{long && !open ? values[0] : values.join(", ")}</strong>
+      {long && (
+        <button type="button" className="chip-more" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          {open ? "show less" : `+${values.length - 1} more`}
+        </button>
+      )}
+    </span>
   );
 }

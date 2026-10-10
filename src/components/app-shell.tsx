@@ -9,6 +9,7 @@ import { useTheme } from "@/lib/use-theme";
 import { useSession } from "@/lib/use-session";
 import { Logo } from "./logo";
 import { PlanBadge } from "./plan-badge";
+import { useShortlists } from "@/lib/shortlist-store";
 import { MoonIcon, SavedIcon, SearchIcon, ShortlistIcon, SunIcon } from "./icons";
 
 const NAV = [
@@ -76,6 +77,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { dark, toggle } = useTheme();
   const themeLabel = dark ? "Switch to light mode" : "Switch to dark mode";
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  // Shortlists colleagues sent you that are waiting for an answer.
+  const waiting = useShortlists().invites.length;
+  const badge = (href: string) =>
+    href === "/shortlists" && waiting > 0 ? (
+      <span className="nav-badge" aria-label={`${waiting} waiting for you`}>{waiting}</span>
+    ) : null;
 
   return (
     <div className="shell">
@@ -85,7 +92,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Link>
         {NAV.map(({ href, label, Icon }) => (
           <Link key={href} href={href} className="navi" aria-current={isActive(href) ? "page" : undefined}>
-            <Icon />
+            <span className="nav-icon">
+              <Icon />
+              {badge(href)}
+            </span>
             {label}
           </Link>
         ))}
@@ -115,7 +125,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <nav className="tabs" aria-label="Main">
         {NAV.map(({ href, label, Icon }) => (
           <Link key={href} href={href} className="tab" aria-current={isActive(href) ? "page" : undefined}>
-            <Icon />
+            <span className="nav-icon">
+              <Icon />
+              {badge(href)}
+            </span>
             {label}
           </Link>
         ))}

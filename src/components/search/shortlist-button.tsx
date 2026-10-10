@@ -6,7 +6,9 @@ import { useShortlists } from "@/lib/shortlist-store";
 import { ShortlistIcon } from "../icons";
 
 export function ShortlistButton({ personId, personName, wide = false }: { personId: string; personName: string; wide?: boolean }) {
-  const { lists, create, add, remove } = useShortlists();
+  const { lists: allLists, create, add, remove } = useShortlists();
+  // Only your own lists: ones shared with you are view only.
+  const lists = allLists?.filter((l) => l.owned) ?? null;
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);

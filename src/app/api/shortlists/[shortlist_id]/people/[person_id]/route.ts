@@ -3,13 +3,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRecruiter } from "@/lib/auth";
 import { isCandidateId, isUuid, jsonError } from "@/lib/http";
-import { findShortlist } from "@/lib/shortlists";
+import { findShortlist, VIEW_ONLY_MESSAGE } from "@/lib/shortlists";
 import { userClient } from "@/lib/supabase/user";
 
 type Params = { params: Promise<{ shortlist_id: string; person_id: string }> };
 type Loaded = { db: SupabaseClient; shortlist_id: string; person_id: string } | { error: Response };
 
-// Checks the caller, the ids, and that the list belongs to their company.
+// Checks the caller, the ids, and that the list is theirs. A list shared with
+// them to view gets 403; one they can't see at all gets 404.
 async function load(request: Request, { params }: Params): Promise<Loaded> {
   const recruiter = await getRecruiter(request);
   if (!recruiter) return { error: jsonError(401, "Sign in to edit shortlists.") };
@@ -20,10 +21,10 @@ async function load(request: Request, { params }: Params): Promise<Loaded> {
 
   const db = userClient(recruiter.token);
   try {
-    // RLS: another company's list is invisible, so it is "not found".
-    if (!(await findShortlist(db, shortlist_id))) {
-      return { error: jsonError(404, "Shortlist not found.") };
-    }
+    // RLS: a list they can't see is invisible, so it is "not found".
+    const list = await findShortlist(db, shortlist_id);
+    if (!list) return { error: jsonError(404, "Shortlist not found.") };
+    if (list.created_by !== recruiter.userId) return { error: jsonError(403, VIEW_ONLY_MESSAGE) };
   } catch {
     return { error: jsonError(500, "Something went wrong. Please try again.") };
   }

@@ -16,9 +16,9 @@ const check = (ok: boolean, label: string) => {
   if (!ok) failures++;
 };
 
-async function tokenFor(company: string) {
+async function tokenFor(company: string, user = "recruiter") {
   const c = createClient(URL, PUBLISHABLE, { auth: { persistSession: false } });
-  const { data, error } = await c.auth.signInWithPassword({ email: `recruiter@${company}.test`, password: "rotto-assessment" });
+  const { data, error } = await c.auth.signInWithPassword({ email: `${user}@${company}.test`, password: "rotto-assessment" });
   if (error || !data.session) throw error ?? new Error("Sign-in failed");
   return data.session.access_token;
 }
@@ -89,8 +89,46 @@ check((await rows(asUser("").from("shortlists").select("id"))) === 0, "no token:
 const { data: after } = await admin.from("shortlists").select("name, shortlist_people(candidate_id)").eq("id", list.id).single();
 check(after?.name === "Acme secret list" && after.shortlist_people.length === 1, "acme's list is unchanged after all attacks");
 
-// ---------- C. Hostile briefs ----------
-console.log("\nC. Hostile briefs");
+// ---------- C. Sharing between colleagues ----------
+// acme's list is private to recruiter@acme.test until they send it to
+// recruiter2@acme.test and recruiter2 accepts. Then it is view only.
+console.log("\nC. Sharing a shortlist with a colleague");
+const acme2 = await tokenFor("acme", "recruiter2");
+const db2 = asUser(acme2);
+check((await api(acme2, "GET", `/api/shortlists/${list.id}`)).status === 404, "colleague can't open the list before it's shared (404)");
+check((await rows(db2.from("shortlists").select("id").eq("id", list.id))) === 0, "colleague can't read it directly before it's shared");
+const colleagues = await (await api(acme, "GET", "/api/colleagues")).json();
+check(JSON.stringify(colleagues) === JSON.stringify([{ email: "recruiter2@acme.test" }]), "colleague picker lists only recruiter2@acme.test");
+check((await api(acme, "POST", `/api/shortlists/${list.id}/share`, { email: "recruiter@globex.test" })).status === 400, "can't send to another company (400)");
+check((await api(acme, "POST", `/api/shortlists/${list.id}/share`, { email: "recruiter@acme.test" })).status === 400, "can't send to yourself (400)");
+check((await api(globex, "POST", `/api/shortlists/${list.id}/share`, { email: "recruiter2@acme.test" })).status === 404, "globex can't send acme's list (404)");
+check(await denied(db2.from("shortlist_shares").insert({ shortlist_id: list.id, company_id: "acme", from_user: "00000000-0000-0000-0000-000000000000", to_user: "00000000-0000-0000-0000-000000000000" })), "can't create an invite directly");
+check((await api(acme, "POST", `/api/shortlists/${list.id}/share`, { email: "recruiter2@acme.test" })).status === 201, "owner sends it to recruiter2 (201)");
+const invites = await (await api(acme2, "GET", "/api/shares")).json();
+const invite = invites.find((i: { shortlist_id: string }) => i.shortlist_id === list.id);
+check(invite?.status === "pending" && invite.from_email === "recruiter@acme.test", "recruiter2 is notified: a pending invite from recruiter@acme.test");
+check((await api(acme2, "GET", `/api/shortlists/${list.id}`)).status === 404, "still can't open it before accepting (404)");
+check((await (await api(globex, "GET", "/api/shares")).json()).length === 0, "globex sees no invites");
+check((await api(globex, "POST", `/api/shares/${invite.share_id}`, { accept: true })).status === 404, "globex can't accept it (404)");
+check((await api(acme, "POST", `/api/shares/${invite.share_id}`, { accept: true })).status === 404, "the sender can't accept it (404)");
+check((await rows(db2.from("shortlist_shares").update({ status: "accepted" }).eq("id", invite.share_id).select())) === 0, "can't accept by editing the row directly");
+check((await api(acme2, "POST", `/api/shares/${invite.share_id}`, { accept: true })).status === 200, "recruiter2 accepts");
+check((await api(acme2, "GET", `/api/shortlists/${list.id}`)).status === 200, "after accepting, recruiter2 can view it");
+check((await api(acme2, "PATCH", `/api/shortlists/${list.id}`, { name: "hacked" })).status === 403, "view only: can't rename (403)");
+check((await api(acme2, "POST", `/api/shortlists/${list.id}/people/cand_0002`)).status === 403, "view only: can't add people (403)");
+check((await api(acme2, "DELETE", `/api/shortlists/${list.id}/people/cand_0001`)).status === 403, "view only: can't remove people (403)");
+check((await api(acme2, "DELETE", `/api/shortlists/${list.id}`)).status === 403, "view only: can't delete (403)");
+check((await rows(db2.from("shortlists").update({ name: "hacked" }).eq("id", list.id).select())) === 0, "view only: can't rename directly");
+check(await denied(db2.from("shortlist_people").insert({ shortlist_id: list.id, candidate_id: "cand_0002" })), "view only: can't add people directly");
+check((await rows(db2.from("shortlist_people").delete().eq("shortlist_id", list.id).select())) === 0, "view only: can't remove people directly");
+check((await api(globex, "GET", `/api/shortlists/${list.id}`)).status === 404, "globex still can't see it (404)");
+check((await api(acme2, "POST", `/api/shares/${invite.share_id}`, { accept: false })).status === 200, "recruiter2 leaves the shared list");
+check((await api(acme2, "GET", `/api/shortlists/${list.id}`)).status === 404, "after leaving, it's hidden again (404)");
+const { data: afterShare } = await admin.from("shortlists").select("name, shortlist_people(candidate_id)").eq("id", list.id).single();
+check(afterShare?.name === "Acme secret list" && afterShare.shortlist_people.length === 1, "acme's list is unchanged after the sharing attacks");
+
+// ---------- D. Hostile briefs ----------
+console.log("\nD. Hostile briefs");
 const hostile = [
   "'; DROP TABLE candidates; --",
   "senior engineers' OR '1'='1",

@@ -18,9 +18,12 @@ const COMPANIES = [
   { id: "acme", name: "Acme" },
   { id: "globex", name: "Globex" },
 ];
+// Two recruiters per company, so shortlists can be shared between colleagues.
 const RECRUITERS = [
   { email: "recruiter@acme.test", company_id: "acme" },
+  { email: "recruiter2@acme.test", company_id: "acme" },
   { email: "recruiter@globex.test", company_id: "globex" },
+  { email: "recruiter2@globex.test", company_id: "globex" },
 ];
 
 type RawCandidate = {
