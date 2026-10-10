@@ -16,6 +16,7 @@ import {
   type SyntheticEvent,
 } from "react";
 import { useRouter } from "next/navigation";
+import { safeNext } from "@/lib/safe-next";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -301,6 +302,18 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Next.js keeps this page in memory after you leave it, so coming back after
+  // signing out would show the form exactly as it was ("Signing in…", buttons
+  // off). Reset it whenever the page is left, which also clears the password.
+  useEffect(
+    () => () => {
+      setBusy(false);
+      setError(null);
+      setPassword("");
+    },
+    [],
+  );
+
   const still = useMediaQuery("(prefers-reduced-motion: reduce)");
   const phone = useMediaQuery("(max-width: 760px)");
   const moment = useDemo(still);
@@ -318,7 +331,7 @@ export default function LoginPage() {
         password: withPassword,
       });
       if (!authError) {
-        router.replace("/");
+        router.replace(safeNext(new URLSearchParams(window.location.search).get("next")));
         return;
       }
       setError(

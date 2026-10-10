@@ -1,6 +1,6 @@
 "use client";
 // Shortlists: every list on the left, the chosen list on the right. Rename or
-// delete or clear a list, open anyone's profile, or take them off the list. The chosen
+// delete, clear or export a list, open anyone's profile, or take them off the list. The chosen
 // list is in the address (?list=…), so a reload or a shared link opens it again.
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { useShortlists, type Shortlist } from "@/lib/shortlist-store";
 import { EMPTY_FILTERS } from "@/lib/search/filters";
+import { downloadShortlist } from "@/lib/export-csv";
 import type { CandidateSummary } from "@/lib/search/candidates";
 import { Avatar } from "./search/result-row";
 import { ProfilePanel } from "./search/profile-panel";
@@ -82,6 +83,14 @@ export function ShortlistsScreen() {
             </div>
           ) : chosen ? (
             <ListView key={chosen.id} list={chosen} />
+          ) : lists && params.get("list") ? (
+            <div className="sheet state-card">
+              <h2 className="display">This shortlist isn&apos;t available</h2>
+              <p className="muted">It may have been deleted, or it belongs to another company.</p>
+              <div className="state-actions">
+                <Link href="/shortlists" className="btn">Back to your shortlists</Link>
+              </div>
+            </div>
           ) : null}
         </div>
       </div>
@@ -179,6 +188,15 @@ function ListView({ list }: { list: Shortlist }) {
         {!editing && (
           <span className="list-actions">
             <button className="btn-quiet" onClick={() => setEditing(true)}>Rename</button>
+            {people.length > 0 && (
+              <button
+                className="btn-quiet"
+                title="Download this shortlist as a CSV file for Excel or Google Sheets"
+                onClick={() => downloadShortlist(list.name, people)}
+              >
+                Export
+              </button>
+            )}
             {memberCount > 0 && (
               <button className="btn-quiet" onClick={() => setConfirming("clear")}>Clear list</button>
             )}

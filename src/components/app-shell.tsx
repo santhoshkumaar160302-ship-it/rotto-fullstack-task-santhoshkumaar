@@ -3,7 +3,7 @@
 // plus bottom tabs on a phone. Holds navigation, the light/dark switch and the account menu.
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { useTheme } from "@/lib/use-theme";
 import { useSession } from "@/lib/use-session";
@@ -30,12 +30,14 @@ function CompanyMark({ company }: { company: string }) {
 }
 
 function AccountMenu({ company, email, showName }: { company: string; email: string; showName: boolean }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
+  // A full page load wipes everything this account had loaded, so whoever
+  // signs in next never sees it, even for a moment.
   async function signOut() {
+    setOpen(false);
     await supabaseBrowser().auth.signOut();
-    router.replace("/login");
+    window.location.replace("/login");
   }
 
   return (
