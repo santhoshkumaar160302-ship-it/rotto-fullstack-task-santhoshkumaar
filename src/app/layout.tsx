@@ -6,7 +6,7 @@ const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-disp
 const body = Geist({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Candidate search",
+  title: "Rotto Search",
   description: "Describe the people you need. See the filters, change them, find everyone who matches.",
 };
 

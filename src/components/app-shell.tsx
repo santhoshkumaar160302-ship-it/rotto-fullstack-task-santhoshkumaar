@@ -84,10 +84,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       <span className="nav-badge" aria-label={`${waiting} waiting for you`}>{waiting}</span>
     ) : null;
 
+  // Hidden until we know someone is signed in, so a signed-out visitor never
+  // sees the app frame for a moment before being sent to the login page.
   return (
-    <div className="shell">
+    <div className="shell" data-signed-in={session ? "true" : undefined}>
       <nav className="rail" aria-label="Main">
-        <Link href="/" className="rail-logo" aria-label="Candidate search home">
+        <Link href="/" className="rail-logo" aria-label="Rotto Search home">
           <Logo />
         </Link>
         {NAV.map(({ href, label, Icon }) => (
@@ -108,8 +110,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       </nav>
 
       <header className="topbar">
-        <Link href="/" aria-label="Candidate search home" className="topbar-logo">
-          <Logo size={30} /> Candidate search
+        <Link href="/" aria-label="Rotto Search home" className="topbar-logo">
+          <Logo size={30} /> Rotto Search
         </Link>
         <button type="button" className="icon-btn" onClick={toggle} aria-label={themeLabel} title={themeLabel}>
           {dark ? <SunIcon /> : <MoonIcon />}

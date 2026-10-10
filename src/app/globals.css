@@ -538,3 +538,6 @@ a.btn-quiet { text-decoration: none; }
 .chip { display: inline-block; height: auto; min-height: 32px; max-width: 100%; box-sizing: border-box; padding: 6px 12px; border-radius: 16px; line-height: 1.35; }
 .chip strong { overflow-wrap: anywhere; }
 .chip-more { margin-left: 6px; padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--pencil); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+/* The app frame stays hidden until the sign-in check finishes. */
+.shell:not([data-signed-in]) { visibility: hidden; }

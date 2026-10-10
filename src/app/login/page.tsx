@@ -349,7 +349,7 @@ export default function LoginPage() {
       <div className="login-inner">
         <header className="login-top">
           <div className="login-brand" data-wall="text">
-            <Logo /> Candidate search
+            <Logo /> Rotto Search
           </div>
           <div data-wall="text">
             <ThemeToggle />
