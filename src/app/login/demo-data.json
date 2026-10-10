@@ -1,0 +1,236 @@
+{
+  "total": 5000,
+  "briefs": [
+    {
+      "parts": [
+        {
+          "text": "senior",
+          "tag": "Seniority"
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "React",
+          "tag": "Skill"
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "engineers",
+          "tag": "Role"
+        },
+        {
+          "text": " in "
+        },
+        {
+          "text": "New York",
+          "tag": "City"
+        },
+        {
+          "text": " who have worked at "
+        },
+        {
+          "text": "a startup",
+          "tag": "Worked at"
+        }
+      ],
+      "steps": [
+        5000,
+        1254,
+        142,
+        142,
+        34,
+        21
+      ],
+      "faces": [
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-072.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-099.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-081.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-071.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-033.svg"
+      ]
+    },
+    {
+      "parts": [
+        {
+          "text": "product designers",
+          "tag": "Role"
+        },
+        {
+          "text": " in "
+        },
+        {
+          "text": "San Francisco",
+          "tag": "City"
+        },
+        {
+          "text": " who are "
+        },
+        {
+          "text": "open to work",
+          "tag": "Open to work"
+        }
+      ],
+      "steps": [
+        5000,
+        414,
+        66,
+        29
+      ],
+      "faces": [
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-006.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-010.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-018.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-065.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-052.svg"
+      ]
+    },
+    {
+      "parts": [
+        {
+          "text": "backend engineers",
+          "tag": "Role"
+        },
+        {
+          "text": " in "
+        },
+        {
+          "text": "Austin",
+          "tag": "City"
+        },
+        {
+          "text": " who know "
+        },
+        {
+          "text": "Go",
+          "tag": "Skill"
+        },
+        {
+          "text": " and "
+        },
+        {
+          "text": "Kubernetes",
+          "tag": "Skill"
+        }
+      ],
+      "steps": [
+        5000,
+        573,
+        52,
+        21,
+        7
+      ],
+      "faces": [
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-022.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-094.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-056.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-053.svg",
+        "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-033.svg"
+      ]
+    }
+  ],
+  "avatars": [
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-001.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-002.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-003.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-004.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-005.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-006.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-007.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-008.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-009.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-010.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-011.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-012.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-013.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-014.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-015.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-016.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-017.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-018.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-019.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-020.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-021.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-022.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-023.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-024.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-025.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-026.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-027.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-028.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-029.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-030.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-031.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-032.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-033.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-034.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-035.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-036.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-037.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-038.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-039.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-040.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-041.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-042.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-043.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-044.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-045.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-046.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-047.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-048.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-049.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-050.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-051.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-052.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-053.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-054.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-055.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-056.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-057.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-058.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-059.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-060.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-061.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-062.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-063.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-064.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-065.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-066.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-067.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-068.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-069.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-070.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-071.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-072.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-073.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-074.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-075.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-076.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-077.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-078.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-079.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-080.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-081.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-082.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-083.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-084.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-085.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-086.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-087.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-088.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-089.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-090.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-091.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-092.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-093.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-094.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-095.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-096.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-097.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-098.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-099.svg",
+    "https://rotto.com/rotto/full-stack-assessment/avatars/avatar-100.svg"
+  ]
+}

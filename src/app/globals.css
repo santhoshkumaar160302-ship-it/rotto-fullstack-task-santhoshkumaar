@@ -1,26 +1,195 @@
 @import "tailwindcss";
 
+/* Design tokens. Light by default; html.dark switches every color at once. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ground: #F1F2F4;
+  --sheet: #FFFFFF;
+  --sheet2: #F5F6F8;
+  --ink: #1A1C21;
+  --pencil: #5B616D;
+  --faint: #8D939D;
+  --rule: #E3E5E9;
+  --hl: #FFE352;
+  --on-hl: #1A1C21;
+  --red: #B42F25;
+  --red-soft: #FCEDEB;
+  --ok: #1E8A4C;
+  --btn: #1A1C21;
+  --on-btn: #FFFFFF;
+  --lift: 0 1px 2px rgba(26, 28, 33, .06), 0 28px 56px -18px rgba(26, 28, 33, .30);
+  --scrim: rgba(17, 18, 22, .42);
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html.dark {
+  --ground: #111216;
+  --sheet: #191B20;
+  --sheet2: #21242B;
+  --ink: #EDEEF0;
+  --pencil: #A6ACB6;
+  --faint: #7A808C;
+  --rule: #2B2E35;
+  --on-hl: #17150A;
+  --red: #FF8A7E;
+  --red-soft: #3A1E1C;
+  --ok: #56CC86;
+  --btn: #EDEEF0;
+  --on-btn: #15161A;
+  --lift: 0 1px 2px rgba(0, 0, 0, .4), 0 30px 60px -18px rgba(0, 0, 0, .75);
+  --scrim: rgba(0, 0, 0, .55);
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.display { font-family: var(--font-display), var(--font-body), ui-sans-serif, system-ui, sans-serif; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--pencil); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* The highlighter: understood words in the brief, and matching facts. */
+.hl {
+  background: linear-gradient(var(--hl), var(--hl)) left 55% / 100% 84% no-repeat;
+  color: var(--on-hl);
+  border-radius: .14em .3em .2em .34em;
+  padding: 0 .12em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.mk { background: linear-gradient(transparent 58%, var(--hl) 58%, var(--hl) 94%, transparent 94%); }
+.sweep { animation: sweep .6s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes sweep { from { background-size: 0% 84%; } to { background-size: 100% 84%; } }
+@media (prefers-reduced-motion: reduce) { .sweep { animation: none; } }
+
+/* Buttons */
+.btn, .btn-quiet, .btn-text {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font: inherit; font-size: 14px; white-space: nowrap; cursor: pointer;
+}
+.btn { height: 40px; padding: 0 16px; border-radius: 10px; border: 0; background: var(--btn); color: var(--on-btn); font-weight: 600; }
+.btn-quiet { height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); font-weight: 500; }
+.btn-quiet:hover { background: var(--sheet2); }
+.btn-text { height: 36px; padding: 0 4px; border: 0; background: transparent; color: var(--ink); font-weight: 500; }
+.btn:disabled, .btn-quiet:disabled { opacity: .55; cursor: default; }
+
+/* Shared pieces */
+.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 16px; }
+.pic { flex: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-weight: 600; overflow: hidden; }
+.pic img { width: 100%; height: 100%; object-fit: cover; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-weight: 600; }
+.field input {
+  height: 46px; box-sizing: border-box; padding: 0 14px; border-radius: 10px;
+  border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); font: inherit; font-size: 15px;
+}
+.alert { display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--red-soft); color: var(--red); font-size: 14px; }
+
+/* ---------- Login page ---------- */
+.login { position: relative; min-height: 100vh; overflow: hidden; }
+.login-inner {
+  position: relative; z-index: 1; box-sizing: border-box; min-height: 100vh;
+  max-width: 1200px; margin: 0 auto; padding: 40px clamp(20px, 5vw, 56px);
+  display: flex; flex-direction: column;
+}
+.login-brand { align-self: flex-start; display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+.login-main { flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 48px 80px; padding: 32px 0; }
+.login-hero { flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 26px; }
+.login-lede { margin: 0; max-width: 46ch; font-size: 16px; line-height: 1.55; color: var(--pencil); }
+.login-card {
+  flex: 0 1 400px; min-width: 0; box-sizing: border-box; padding: 36px;
+  display: flex; flex-direction: column; gap: 18px;
+  background: var(--sheet); border-radius: 20px; box-shadow: var(--lift);
+}
+.login-card h1 { margin: 0 0 4px; font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.login-submit { height: 46px; margin-top: 4px; font-size: 15px; }
+.login-or { display: flex; align-items: center; gap: 12px; margin-top: 6px; font-size: 13px; color: var(--pencil); }
+.login-or::before, .login-or::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+.login-accounts { display: flex; flex-direction: column; gap: 10px; }
+.login-account { height: auto; justify-content: flex-start; gap: 12px; padding: 10px 12px; border-radius: 12px; text-align: left; }
+.login-account-text { display: flex; flex-direction: column; }
+
+/* The demo brief: it types itself, then each phrase the search understands is marked. */
+.demo { display: flex; flex-direction: column; gap: 26px; }
+.demo-brief { display: grid; font-size: clamp(34px, 4.4vw, 54px); line-height: 1.7; font-weight: 600; letter-spacing: -0.03em; }
+.demo-brief > p { grid-area: 1 / 1; margin: 0; } /* all briefs share one cell, so the box always fits the longest */
+.demo-ghost { visibility: hidden; }
+.demo-live { transition: opacity .4s ease, transform .4s ease; }
+.demo-live.out { opacity: 0; transform: translateY(-10px); }
+.demo-phrase { position: relative; white-space: nowrap; padding: 0 .12em; margin: 0 -.06em; }
+.demo-tag {
+  position: absolute; left: .1em; bottom: calc(100% - .05em);
+  padding: 5px 7px; border-radius: 7px; background: var(--ink); color: var(--ground);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px; font-weight: 600; line-height: 1; letter-spacing: 0; white-space: nowrap;
+  animation: tag-in .35s cubic-bezier(.2, .7, .2, 1) both;
+}
+@keyframes tag-in { from { opacity: 0; transform: translateY(6px); } }
+.demo-caret { display: inline-block; width: 0; height: .9em; vertical-align: -.1em; box-shadow: .03em 0 0 .03em var(--ink); animation: caret-blink 1s steps(1) infinite; }
+@keyframes caret-blink { 50% { opacity: 0; } }
+.demo-count { display: flex; flex-direction: column; gap: 8px; }
+.demo-number { font-size: 52px; line-height: 1; font-weight: 600; letter-spacing: -0.03em; }
+.demo-caption { font-size: 15px; color: var(--pencil); }
+.demo-faces { display: none; align-items: center; gap: 8px; min-height: 36px; } /* phones only */
+.demo-face {
+  position: relative; width: 36px; height: 36px; border-radius: 50%; overflow: hidden;
+  background: var(--sheet2); box-shadow: 0 0 0 2px var(--hl);
+  animation: face-in .4s cubic-bezier(.2, .8, .2, 1.3) both;
+}
+@keyframes face-in { from { opacity: 0; transform: scale(.6); } }
+.demo-more { margin-left: 4px; font-size: 13px; font-weight: 600; color: var(--pencil); }
+
+/* The wall of faces behind the form: everyone in gray (dim, or lit while they
+   still match), with the matches in color on a second layer above the fade. */
+.wall { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.wall-grid {
+  position: absolute; left: -40px; top: -60px; display: grid; grid-auto-rows: 66px; gap: 14px;
+  animation: wall-in 1s ease both, wall-drift 40s ease-in-out -20s infinite alternate;
+}
+@keyframes wall-in { from { opacity: 0; } }
+@keyframes wall-drift { from { transform: translate(24px, 24px); } to { transform: translate(-24px, -24px); } }
+.face { position: relative; width: 66px; height: 66px; border-radius: 18px; overflow: hidden; background: var(--sheet2); }
+.face[data-state] { opacity: .1; filter: grayscale(1); transition: opacity .8s ease; }
+.face[data-state="lit"] { opacity: .48; }
+html.dark .face[data-state="lit"] { opacity: .4; }
+.face-match {
+  transform: scale(1.08); box-shadow: 0 0 0 3px var(--hl), 0 14px 28px -14px rgba(26, 28, 33, .5);
+  transition: opacity .4s ease; animation: match-in .6s cubic-bezier(.2, .8, .2, 1.3) backwards;
+}
+.face-match.leaving { opacity: 0; }
+@keyframes match-in { from { opacity: 0; transform: scale(.8); } }
+/* A plain head-and-shoulders outline, seen only if an avatar can't load. */
+.face::before, .face::after { content: ""; position: absolute; left: 50%; background: var(--faint); opacity: .45; }
+.face::before { top: 14px; width: 24px; height: 24px; margin-left: -12px; border-radius: 50%; }
+.face::after { top: 42px; width: 44px; height: 36px; margin-left: -22px; border-radius: 22px 22px 0 0; }
+.face img, .demo-face img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; background: var(--sheet2); }
+/* Fades the faces behind the headline so it stays easy to read. */
+.wall-calm {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--ground) 0%, var(--ground) 30%, color-mix(in srgb, var(--ground) 55%, transparent) 50%, transparent 68%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall-grid, .face-match, .demo-tag, .demo-caret, .demo-face { animation: none; }
+  .face[data-state], .face-match, .demo-live { transition: none; }
+}
+
+@media (max-width: 760px) {
+  .wall { display: none; }
+  .login-inner { padding: 24px 20px; }
+  .login-main { gap: 32px; padding: 28px 0 8px; }
+  .demo { gap: 20px; }
+  .demo-brief { font-size: 30px; line-height: 1.85; }
+  .demo-number { font-size: 40px; }
+  .demo-faces { display: flex; }
+  .login-card { padding: 24px; }
 }
