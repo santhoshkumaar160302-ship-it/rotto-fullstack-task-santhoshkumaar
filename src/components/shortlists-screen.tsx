@@ -1,6 +1,6 @@
 "use client";
 // Shortlists: every list on the left, the chosen list on the right. Rename or
-// delete a list, open anyone's profile, or take them off the list. The chosen
+// delete or clear a list, open anyone's profile, or take them off the list. The chosen
 // list is in the address (?list=…), so a reload or a shared link opens it again.
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -96,14 +96,20 @@ function ListView({ list }: { list: Shortlist }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(list.name);
-  const [confirming, setConfirming] = useState(false);
+  const [confirming, setConfirming] = useState<"delete" | "clear" | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const closeProfile = useCallback(() => setOpenId(null), []);
   const memberCount = list.candidate_ids.length;
 
-  // Load the people on this list; reload when someone is added from elsewhere.
+  // The store says who is on the list; the server fills in their details. Load
+  // the details only when the store has someone we haven't loaded yet (added
+  // from search). Removals never reload, so a reload can't race a removal that
+  // is still on its way to the server and bring people back on screen.
+  const known = new Set(detail?.people.map((p) => p.id) ?? []);
+  const needsLoad = !detail || list.candidate_ids.some((id) => !known.has(id));
   useEffect(() => {
+    if (!needsLoad) return;
     let cancelled = false;
     api<ListDetail>(`/api/shortlists/${list.id}`)
       .then((data) => !cancelled && setDetail(data))
@@ -111,7 +117,7 @@ function ListView({ list }: { list: Shortlist }) {
     return () => {
       cancelled = true;
     };
-  }, [list.id, memberCount]);
+  }, [list.id, needsLoad]);
 
   async function saveName(event: FormEvent) {
     event.preventDefault();
@@ -134,6 +140,17 @@ function ListView({ list }: { list: Shortlist }) {
     }
   }
 
+  // Takes everyone off the list but keeps the list itself.
+  async function clearList() {
+    const ids = [...list.candidate_ids];
+    setConfirming(null);
+    setProblem(null);
+    setDetail((now) => (now ? { ...now, people: [] } : now));
+    const results = await Promise.allSettled(ids.map((id) => remove(list.id, id)));
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed > 0) setProblem(`We couldn't remove ${failed} ${failed === 1 ? "person" : "people"}. Please try again.`);
+  }
+
   async function takeOff(person: CandidateSummary) {
     setDetail((now) => (now ? { ...now, people: now.people.filter((p) => p.id !== person.id) } : now));
     try {
@@ -143,7 +160,7 @@ function ListView({ list }: { list: Shortlist }) {
     }
   }
 
-  const people = detail?.people ?? [];
+  const people = (detail?.people ?? []).filter((p) => list.candidate_ids.includes(p.id));
   return (
     <div className="list-view">
       <Link href="/shortlists" className="btn-text muted list-back">
@@ -162,7 +179,10 @@ function ListView({ list }: { list: Shortlist }) {
         {!editing && (
           <span className="list-actions">
             <button className="btn-quiet" onClick={() => setEditing(true)}>Rename</button>
-            <button className="btn-quiet danger" onClick={() => setConfirming(true)}>Delete</button>
+            {memberCount > 0 && (
+              <button className="btn-quiet" onClick={() => setConfirming("clear")}>Clear list</button>
+            )}
+            <button className="btn-quiet danger" onClick={() => setConfirming("delete")}>Delete</button>
           </span>
         )}
       </div>
@@ -170,14 +190,25 @@ function ListView({ list }: { list: Shortlist }) {
         {list.candidate_ids.length} {list.candidate_ids.length === 1 ? "person" : "people"}
       </p>
 
-      {confirming && (
+      {confirming === "clear" && (
+        <div className="notice confirm" role="alertdialog" aria-label="Clear shortlist">
+          <span>
+            Remove all {memberCount} {memberCount === 1 ? "person" : "people"} from <strong>{list.name}</strong>? The list stays, empty.
+          </span>
+          <span className="list-actions">
+            <button className="btn danger-solid" onClick={clearList}>Remove everyone</button>
+            <button className="btn-text" onClick={() => setConfirming(null)}>Keep them</button>
+          </span>
+        </div>
+      )}
+      {confirming === "delete" && (
         <div className="notice confirm" role="alertdialog" aria-label="Delete shortlist">
           <span>
             Delete <strong>{list.name}</strong>? The people stay in search; only this list goes.
           </span>
           <span className="list-actions">
             <button className="btn danger-solid" onClick={deleteList}>Delete shortlist</button>
-            <button className="btn-text" onClick={() => setConfirming(false)}>Keep it</button>
+            <button className="btn-text" onClick={() => setConfirming(null)}>Keep it</button>
           </span>
         </div>
       )}
