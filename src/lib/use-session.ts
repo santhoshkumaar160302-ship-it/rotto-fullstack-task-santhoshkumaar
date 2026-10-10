@@ -1,6 +1,7 @@
 "use client";
-// Keeps a screen behind sign-in: sends signed-out visitors to /login.
-import { useEffect, useState } from "react";
+// Keeps screens behind sign-in: sends signed-out visitors to /login, and shares
+// who is signed in with every screen through useSession().
+import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "./supabase/browser";
 
@@ -28,3 +29,7 @@ export function useRequireSession(): SessionInfo | null {
 
   return info;
 }
+
+// Null until the session is known. Screens wait for it before loading data.
+export const SessionContext = createContext<SessionInfo | null>(null);
+export const useSession = () => useContext(SessionContext);
