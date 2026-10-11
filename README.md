@@ -1,5 +1,7 @@
 # Rotto Search
 
+**Demo video:** https://www.loom.com/share/7109778d4dab4632a2442746d8881b8c
+
 Recruiters describe who they need in plain English, for example "senior React engineers in New York who have worked at a startup". The app turns the brief into filters, shows which words it understood, and lists the matching candidates. Any filter can be changed by clicking the highlighted word. Candidates can be added to shortlists, shortlists can be shared with colleagues and exported as CSV, and searches can be saved. The app supports dark mode and phone screens.
 
 ## Running it
