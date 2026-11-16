@@ -9,8 +9,14 @@ import {
 } from "./filters";
 import { dropUnknownAlternatives, narrowEngineerRoles, repairUnsupported } from "./repair";
 
-// GEMINI_MODEL lets us compare models without editing code; the default is the one we ship.
-export const MODEL = process.env.GEMINI_MODEL ?? "gemini-3.5-flash-lite";
+// The model we use, and one to fall back on. On Gemini's free tier each model
+// has its own request limit (about 10 a minute per Google project), so when one
+// says "too many requests" or "overloaded", the next request goes to the other.
+// Both pass all our tests. GEMINI_MODEL and GEMINI_FALLBACK_MODEL change them
+// without editing code (GEMINI_FALLBACK_MODEL="" turns the fallback off).
+export const MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+export const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL ?? "gemini-3.5-flash-lite";
+const MODELS = FALLBACK_MODEL && FALLBACK_MODEL !== MODEL ? [MODEL, FALLBACK_MODEL] : [MODEL];
 export const MAX_BRIEF_LENGTH = 500;
 
 const ENGINEER_ROLES = ROLES.filter((r) => r.endsWith("Engineer"));
@@ -23,7 +29,7 @@ const list = (values: readonly string[], description: string) => ({
   description,
 });
 
-const RESPONSE_SCHEMA = {
+export const RESPONSE_SCHEMA = {
   type: "object",
   properties: {
     roles: list(ROLES, "Job roles. A candidate matches if their role is any of these."),
@@ -61,7 +67,7 @@ const RESPONSE_SCHEMA = {
   ],
 };
 
-const SYSTEM_INSTRUCTION = `
+export const SYSTEM_INSTRUCTION = `
 You translate a recruiter's search brief into JSON filters for a candidate database.
 You only produce filters. You never see, choose or rank candidates.
 
@@ -214,6 +220,10 @@ export class ModelBusyError extends Error {
   }
 }
 
+// Gemini said it is overloaded (HTTP 503, "high demand") on every request.
+// Unlike "too many requests", trying again straight away often works.
+export class ModelOverloadedError extends Error {}
+
 // Gemini didn't answer in time, even with backup requests.
 export class ModelTimeoutError extends Error {}
 
@@ -286,13 +296,13 @@ function cleanMentions(raw: unknown, brief: string, filters: Filters): Mention[]
   return out;
 }
 
-async function parseBriefOnce(brief: string): Promise<ParsedBrief> {
+async function parseBriefOnce(brief: string, model: string): Promise<ParsedBrief> {
   const text = brief.trim().slice(0, MAX_BRIEF_LENGTH);
 
   let interaction;
   try {
     interaction = await getClient().interactions.create({
-    model: MODEL,
+    model,
     system_instruction: SYSTEM_INSTRUCTION,
     // Sent as data, not as part of the instructions.
     input: JSON.stringify({ brief: text }),
@@ -312,7 +322,9 @@ async function parseBriefOnce(brief: string): Promise<ParsedBrief> {
     maxRetries: 0,
   });
   } catch (error) {
-    if ((error as { status?: unknown }).status === 429) throw new ModelBusyError(retryAfterSeconds(error));
+    const status = (error as { status?: unknown }).status;
+    if (status === 429) throw new ModelBusyError(retryAfterSeconds(error));
+    if (status === 503) throw new ModelOverloadedError("The language model is overloaded (high demand).");
     throw error;
   }
 
@@ -363,24 +375,41 @@ async function parseBriefOnce(brief: string): Promise<ParsedBrief> {
   return { filters: fixed, mentions };
 }
 // ---------- Waiting for the model ----------
-// Gemini usually answers in 1–2 s, but now and then a request gets no answer.
-// So if there's no answer after 2 s we send an identical backup request, after
-// 5 s one more, and use whichever answers first. After 9 s we give up so the
-// recruiter can try again (the route refunds the search).
-//
-// If Gemini says "too many requests" we send nothing more: it would be refused
-// too and only use up more of the limit.
+// Gemini usually answers in 1–2 s, but under heavy load a request can get no
+// answer for a long time, or come back "overloaded" (503) or "too many
+// requests" (429). So:
+//   - no answer after 2 s: send an identical backup request; again after 5 s
+//     and 8 s
+//   - "overloaded" or another quick failure: send the next one at once
+//   - "too many requests" or "overloaded": the next one goes to the other model
+//   - at most 4 requests per search; whichever answers first is used
+//   - after 15 s we give up so the recruiter can try again (the route refunds
+//     the search). Under heavy load answers can take 7-10 s, and a slow right
+//     answer is better than an error.
+// When a model says "too many requests", we leave it alone for as long as it
+// asks (up to a minute), and send to the other model meanwhile.
+// If every model says "too many requests", we stop: more would be refused too.
 //
 // What we ask and how the answer is checked don't change.
-const BACKUP_AFTER_MS = [2000, 5000];
-const GIVE_UP_AFTER_MS = 9000;
+const BACKUP_AFTER_MS = [2000, 5000, 8000];
+const MAX_REQUESTS = 4;
+export const GIVE_UP_AFTER_MS = 15000;
+
+// Model -> time until which it asked us to wait (shared by all searches).
+const restingUntil = new Map<string, number>();
+const isResting = (model: string) => (restingUntil.get(model) ?? 0) > Date.now();
 
 export function parseBrief(brief: string): Promise<ParsedBrief> {
   return new Promise((resolve, reject) => {
     const started = Date.now();
     let sent = 0;
     let waiting = 0;
+    let overloaded = 0;
+    let preferred = MODELS.findIndex((m) => !isResting(m));
+    if (preferred < 0) preferred = 0; // all resting: try the first anyway
     let busy: ModelBusyError | null = null;
+    let lastBusy: ModelBusyError | null = null;
+    const refused = new Set<string>(); // said "too many requests" in this search
     let firstError: unknown;
     let done = false;
 
@@ -391,20 +420,43 @@ export function parseBrief(brief: string): Promise<ParsedBrief> {
       settle();
     };
 
+    // The clearest reason to give the recruiter when nothing worked.
+    const failure = (fallback: unknown) =>
+      busy ??
+      (overloaded > 0 ? new ModelOverloadedError("The language model is overloaded (high demand).") : null) ??
+      lastBusy ??
+      fallback;
+
+    // The preferred model, or else any model that hasn't refused us.
+    const pick = () => {
+      for (let i = 0; i < MODELS.length; i++) {
+        const model = MODELS[(preferred + i) % MODELS.length];
+        if (!refused.has(model)) return model;
+      }
+      return null;
+    };
+    const switchFrom = (model: string) => {
+      if (MODELS.length > 1) preferred = (MODELS.indexOf(model) + 1) % MODELS.length;
+    };
+
     const send = () => {
-      if (done || busy || sent > BACKUP_AFTER_MS.length) return;
+      if (done || busy || sent >= MAX_REQUESTS) return;
+      const model = pick();
+      if (!model) return;
       sent += 1;
       waiting += 1;
       const number = sent;
       const sentAt = Date.now();
-      parseBriefOnce(brief).then(
+      parseBriefOnce(brief, model).then(
         (parsed) =>
           finish(() => {
             // One line per search, without the brief (it's confidential): which
             // request answered and how long it took, to see how Gemini behaves.
             console.info(
-              `Gemini answered request ${number} of ${sent} in ${Date.now() - sentAt} ms ` +
-                `(${Date.now() - started} ms after the search started).`,
+              `Gemini (${model}) answered request ${number} of ${sent} in ${Date.now() - sentAt} ms ` +
+                `(${Date.now() - started} ms after the search started` +
+                `${overloaded ? `; ${overloaded} "overloaded" replies before it` : ""}` +
+                `${refused.size ? `; refused by ${[...refused].join(", ")}` : ""}).`,
             );
             resolve(parsed);
           }),
@@ -412,12 +464,21 @@ export function parseBrief(brief: string): Promise<ParsedBrief> {
           waiting -= 1;
           if (done) return;
           if (error instanceof ModelBusyError) {
-            busy = error; // no more backups
+            refused.add(model);
+            lastBusy = error;
+            restingUntil.set(model, Date.now() + Math.min(error.retryAfterSeconds ?? 30, 60) * 1000);
+            switchFrom(model);
+            if (pick() === null) busy = error; // every model refused: send nothing more
+            else send();
+          } else if (error instanceof ModelOverloadedError) {
+            overloaded += 1;
+            switchFrom(model);
+            send();
           } else {
             firstError ??= error;
-            send(); // it failed quickly (not "busy"): send the next one now
+            send(); // it failed quickly: send the next one now
           }
-          if (waiting === 0) finish(() => reject(busy ?? firstError));
+          if (waiting === 0) finish(() => reject(failure(firstError)));
         },
       );
     };
@@ -425,7 +486,7 @@ export function parseBrief(brief: string): Promise<ParsedBrief> {
     const timers = [
       ...BACKUP_AFTER_MS.map((ms) => setTimeout(send, ms)),
       setTimeout(
-        () => finish(() => reject(busy ?? new ModelTimeoutError("The language model took too long to answer."))),
+        () => finish(() => reject(failure(new ModelTimeoutError("The language model took too long to answer.")))),
         GIVE_UP_AFTER_MS,
       ),
     ];

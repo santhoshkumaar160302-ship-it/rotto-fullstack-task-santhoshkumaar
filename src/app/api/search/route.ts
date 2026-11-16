@@ -5,7 +5,7 @@ import { getRecruiter } from "@/lib/auth";
 import { jsonError } from "@/lib/http";
 import { admin } from "@/lib/supabase/admin";
 import { FiltersSchema, MentionsSchema } from "@/lib/search/filters";
-import { BriefParseError, MAX_BRIEF_LENGTH, ModelBusyError, ModelTimeoutError, parseBrief } from "@/lib/search/parse-brief";
+import { BriefParseError, GIVE_UP_AFTER_MS, MAX_BRIEF_LENGTH, ModelBusyError, ModelOverloadedError, ModelTimeoutError, parseBrief } from "@/lib/search/parse-brief";
 import { findCandidateIds, getPlan, saveSearch } from "@/lib/search/run-search";
 import { getCandidateSummaries, PAGE_SIZE } from "@/lib/search/candidates";
 
@@ -14,6 +14,10 @@ const Body = z.object({
   filters: FiltersSchema.optional(),
   mentions: MentionsSchema.optional(),
 });
+
+// Gemini can take up to 15 s under heavy load (see parse-brief.ts). This makes
+// sure the hosting never cuts a search off before that.
+export const maxDuration = 30;
 
 export async function POST(request: Request) {
   const recruiter = await getRecruiter(request);
@@ -74,8 +78,12 @@ export async function POST(request: Request) {
       if (wait) res.headers.set("Retry-After", String(wait));
       return res;
     }
+    if (err instanceof ModelOverloadedError) {
+      console.error(`Search failed: Gemini said it is overloaded (503) and nothing answered within ${GIVE_UP_AFTER_MS / 1000} s.`);
+      return jsonError(503, "The AI that reads briefs is overloaded right now. Please try again in a few seconds.");
+    }
     if (err instanceof ModelTimeoutError) {
-      console.error("Search failed: Gemini gave no answer within 9 s (3 requests sent).");
+      console.error(`Search failed: Gemini gave no answer within ${GIVE_UP_AFTER_MS / 1000} s.`);
       return jsonError(504, "The search took too long. Please try again.");
     }
     console.error("Search failed:", err);
