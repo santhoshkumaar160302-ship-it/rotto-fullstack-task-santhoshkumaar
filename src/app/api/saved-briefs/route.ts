@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { getRecruiter } from "@/lib/auth";
 import { jsonError } from "@/lib/http";
-import { EMPTY_FILTERS, FiltersSchema, MentionsSchema } from "@/lib/search/filters";
+import { EMPTY_FILTERS, FiltersSchema, MentionsSchema, withDefaults } from "@/lib/search/filters";
 import { MAX_BRIEF_LENGTH } from "@/lib/search/parse-brief";
 import { userClient } from "@/lib/supabase/user";
 
@@ -29,7 +29,8 @@ export async function GET(request: Request) {
     console.error("Listing saved searches failed:", error);
     return jsonError(500, "Something went wrong. Please try again.");
   }
-  return Response.json(data);
+  // Searches saved before a filter existed get it filled in as "no filter".
+  return Response.json(data.map((row) => ({ ...row, filters: withDefaults(row.filters) })));
 }
 
 export async function POST(request: Request) {

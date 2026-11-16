@@ -7,7 +7,7 @@ import type { Filters, Mention} from "./filters";
 // True if the filters ask for anything at all.
 export function hasCriteria(f: Filters): boolean {
   const lists = [
-    f.roles, f.seniorities, f.cities, f.skills, f.company_types, f.companies,
+    f.roles, f.seniorities, f.cities, f.skills, f.skills_any, f.company_types, f.companies,
     f.schools, f.degrees, f.fields, f.unsupported,
   ];
   return (

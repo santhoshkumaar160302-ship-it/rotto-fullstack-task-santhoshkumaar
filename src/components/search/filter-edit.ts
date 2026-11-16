@@ -9,6 +9,7 @@ export const OPTIONS: Partial<Record<FilterKey, readonly string[]>> = {
   seniorities: SENIORITIES,
   cities: CITIES,
   skills: SKILLS,
+  skills_any: SKILLS,
   company_types: COMPANY_TYPES,
   companies: COMPANIES,
   schools: SCHOOLS,
@@ -49,6 +50,8 @@ export function phraseFor(key: FilterKey, values: string[]): string {
       return or(values.map((v) => (v === "mid" ? "mid-level" : v)));
     case "skills":
       return values.join(" and ");
+    case "skills_any":
+      return or(values);
     case "roles": {
       const engineers = ROLES.filter((r) => r.endsWith("Engineer"));
       if (values.length === engineers.length && values.every((v) => v.endsWith("Engineer"))) return "engineers";
@@ -76,6 +79,7 @@ export const CLAUSE: Record<FilterKey, string> = {
   seniorities: "who are ",
   cities: "in ",
   skills: "who know ",
+  skills_any: "who know ",
   company_types: "who have worked at ",
   companies: "who have worked at ",
   schools: "who studied at ",

@@ -5,7 +5,7 @@ import { getRecruiter } from "@/lib/auth";
 import { jsonError } from "@/lib/http";
 import { admin } from "@/lib/supabase/admin";
 import { FiltersSchema, MentionsSchema } from "@/lib/search/filters";
-import { BriefParseError, MAX_BRIEF_LENGTH, parseBrief } from "@/lib/search/parse-brief";
+import { BriefParseError, MAX_BRIEF_LENGTH, ModelBusyError, ModelTimeoutError, parseBrief } from "@/lib/search/parse-brief";
 import { findCandidateIds, getPlan, saveSearch } from "@/lib/search/run-search";
 import { getCandidateSummaries, PAGE_SIZE } from "@/lib/search/candidates";
 
@@ -60,6 +60,23 @@ export async function POST(request: Request) {
     await admin.rpc("refund_search", { p_company_id: recruiter.companyId });
     if (err instanceof BriefParseError) {
       return jsonError(422, "We couldn't turn that brief into filters. Try rephrasing it.");
+    }
+    if (err instanceof ModelBusyError) {
+      // Gemini's request limit is used up for the moment.
+      const wait = err.retryAfterSeconds;
+      console.error(`Search failed: Gemini said too many requests (429)${wait ? `, retry in ${wait} s` : ""}.`);
+      const res = jsonError(
+        503,
+        wait
+          ? `Too many searches right now. Please try again in about ${wait} seconds.`
+          : "Too many searches right now. Please try again in a few seconds.",
+      );
+      if (wait) res.headers.set("Retry-After", String(wait));
+      return res;
+    }
+    if (err instanceof ModelTimeoutError) {
+      console.error("Search failed: Gemini gave no answer within 9 s (3 requests sent).");
+      return jsonError(504, "The search took too long. Please try again.");
     }
     console.error("Search failed:", err);
     return jsonError(500, "Search failed. Please try again.");

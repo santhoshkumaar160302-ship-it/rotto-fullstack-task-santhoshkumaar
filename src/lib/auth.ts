@@ -10,16 +10,20 @@ export async function getRecruiter(request: Request): Promise<Recruiter | null> 
   if (!match) return null;
   const token = match[1];
 
-  // Asks Supabase Auth to verify the token (signature and expiry).
-  const { data, error } = await admin.auth.getUser(token);
-  if (error || !data.user) return null;
+  // Verifies the token (signature and expiry). With Supabase's asymmetric
+  // signing keys this happens right here, using the project's public key
+  // (fetched once and cached), with no call to Supabase Auth. With the older
+  // shared-secret keys it falls back to asking Supabase Auth, as before.
+  const { data, error } = await admin.auth.getClaims(token);
+  const userId = data?.claims?.sub;
+  if (error || typeof userId !== "string" || data?.claims?.role !== "authenticated") return null;
 
   const { data: row } = await admin
     .from("recruiters")
     .select("company_id")
-    .eq("user_id", data.user.id)
+    .eq("user_id", userId)
     .maybeSingle();
   if (!row) return null;
 
-  return { userId: data.user.id, companyId: row.company_id, token };
+  return { userId, companyId: row.company_id, token };
 }

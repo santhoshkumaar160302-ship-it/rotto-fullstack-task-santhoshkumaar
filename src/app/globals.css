@@ -360,7 +360,7 @@ html.dark .skill.mk { background: linear-gradient(transparent 84%, var(--hl) 84%
 }
 /* ---------- Correcting the search ---------- */
 .tw { position: relative; }
-.tok { font: inherit; letter-spacing: inherit; line-height: inherit; color: var(--on-hl); border: 0; cursor: pointer; display: inline; }
+.tok { text-align: left; font: inherit; letter-spacing: inherit; line-height: inherit; color: var(--on-hl); border: 0; cursor: pointer; display: inline; }
 .tok:hover { filter: brightness(.96); }
 .tok.open { box-shadow: 0 0 0 2px var(--ink); }
 .struck {
@@ -541,3 +541,47 @@ a.btn-quiet { text-decoration: none; }
 
 /* The app frame stays hidden until the sign-in check finishes. */
 .shell:not([data-signed-in]) { visibility: hidden; }
+
+/* ---------- Filter bar: every filter as a chip you can change ---------- */
+.results-top { align-items: center; }
+.results-top-right { display: flex; align-items: center; gap: 10px; }
+.filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 14px; background: var(--sheet); }
+.filter-bar-title { margin-right: 4px; font-size: 13px; font-weight: 600; color: var(--pencil); }
+.fchip-wrap { display: inline-flex; }
+.fchip { display: inline-flex; align-items: stretch; height: 34px; border: 1px solid var(--rule); border-radius: 999px; background: var(--sheet2); overflow: hidden; }
+.fchip.open { box-shadow: 0 0 0 2px var(--ink); }
+.fchip-main { display: inline-flex; align-items: center; gap: 6px; max-width: 320px; padding: 0 8px 0 12px; border: 0; background: transparent; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; }
+.fchip-main:hover:not(:disabled) { background: var(--rule); }
+.fchip-static { cursor: default; }
+.fchip-label { color: var(--pencil); white-space: nowrap; }
+.fchip-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.fchip-x { display: inline-flex; align-items: center; justify-content: center; width: 30px; border: 0; border-left: 1px solid var(--rule); background: transparent; color: var(--pencil); cursor: pointer; }
+.fchip-x:hover:not(:disabled) { background: var(--rule); color: var(--ink); }
+.fchip-bad { border-color: var(--red); background: var(--red-soft); }
+.fchip-bad .fchip-label, .fchip-bad .fchip-value, .fchip-bad .fchip-x { color: var(--red); }
+.fchip-bad .fchip-x { border-left-color: var(--red); }
+.fchip-add { height: 34px; padding: 0 14px; border: 1px dashed var(--faint); border-radius: 999px; background: transparent; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.fchip-add:hover:not(:disabled) { background: var(--sheet2); }
+.fchip-main:focus-visible, .fchip-x:focus-visible, .fchip-add:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.fchip-main:disabled, .fchip-x:disabled, .fchip-add:disabled { opacity: .55; cursor: default; }
+
+/* ---------- Saving a search ---------- */
+.save-done { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; background: var(--btn); color: var(--on-btn); border-color: var(--btn); }
+.save-done:hover { background: var(--btn); }
+.toast {
+  position: fixed; left: 50%; bottom: 28px; z-index: 70; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px); box-sizing: border-box;
+  padding: 12px 10px 12px 18px; border-radius: 14px; background: var(--btn); color: var(--on-btn);
+  box-shadow: var(--lift); font-size: 14px; animation: toast-in .25s cubic-bezier(.2, .8, .2, 1) both;
+}
+.toast-link { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.toast-x { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: inherit; opacity: .75; cursor: pointer; }
+.toast-x:hover { opacity: 1; }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+@media (max-width: 760px) { .toast { bottom: calc(84px + env(safe-area-inset-bottom)); } }
+.nav-count {
+  position: absolute; top: -6px; right: -10px; min-width: 18px; height: 18px; box-sizing: border-box; padding: 0 5px;
+  border-radius: 9px; background: var(--ink); color: var(--sheet); font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;
+  box-shadow: 0 0 0 2px var(--sheet);
+}

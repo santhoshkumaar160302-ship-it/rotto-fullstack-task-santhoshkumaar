@@ -68,6 +68,9 @@ export const FiltersSchema = z.object({
   seniorities: z.array(z.enum(SENIORITIES)).max(4),      // ANY of
   cities: z.array(z.enum(CITIES)).max(10),               // ANY of
   skills: z.array(z.enum(SKILLS)).max(20),               // ALL of
+  // At least ONE of these skills ("Python or Go"). Optional so searches saved
+  // before this filter existed still read as valid.
+  skills_any: z.array(z.enum(SKILLS)).max(20).default([]), // ANY of
   company_types: z.array(z.enum(COMPANY_TYPES)).max(2),  // worked at ALL of (any job, past or current)
   companies: z.array(z.enum(COMPANIES)).max(28),         // worked at ANY of (any job, past or current)
   schools: z.array(z.enum(SCHOOLS)).max(13),             // studied at ANY of
@@ -84,14 +87,14 @@ export const FiltersSchema = z.object({
 export type Filters = z.infer<typeof FiltersSchema>;
 
 export const EMPTY_FILTERS: Filters = {
-  roles: [], seniorities: [], cities: [], skills: [], company_types: [],
+  roles: [], seniorities: [], cities: [], skills: [], skills_any: [], company_types: [],
   companies: [], schools: [], degrees: [], fields: [],
   min_years: null, max_years: null, open_to_work: null, unsupported: [],
 };
 // Which words of the brief produced which filter. Used only to highlight the
 // brief in the UI; never used to search.
 export const FILTER_KEYS = [
-  "roles", "seniorities", "cities", "skills", "company_types", "companies",
+  "roles", "seniorities", "cities", "skills", "skills_any", "company_types", "companies",
   "schools", "degrees", "fields", "min_years", "max_years", "open_to_work",
 ] as const;
 
@@ -102,3 +105,10 @@ export const MentionSchema = z.object({
 });
 export const MentionsSchema = z.array(MentionSchema).max(20);
 export type Mention = z.infer<typeof MentionSchema>;
+
+// Fills in any filter a stored search doesn't have (e.g. one saved before
+// skills_any existed), so every screen can rely on every filter being there.
+export function withDefaults(stored: unknown): Filters {
+  const parsed = FiltersSchema.partial().safeParse(stored);
+  return { ...EMPTY_FILTERS, ...(parsed.success ? parsed.data : {}) };
+}

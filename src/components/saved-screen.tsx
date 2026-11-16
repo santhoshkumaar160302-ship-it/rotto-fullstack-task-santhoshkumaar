@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { usePlan } from "@/lib/plan";
 import { useSession } from "@/lib/use-session";
+import { changeSavedCount, setSavedCount } from "@/lib/saved-count";
 import { FILTER_LABELS, filterValues, type FilterKey, type Filters, type Mention, type NewSearch } from "./search/types";
 
 type Saved = { id: string; brief: string; filters: Filters; mentions: Mention[]; created_at: string };
@@ -46,7 +47,11 @@ export function SavedScreen() {
     if (!session) return;
     let cancelled = false;
     api<Saved[]>("/api/saved-briefs")
-      .then((data) => !cancelled && setSaved(data))
+      .then((data) => {
+        if (cancelled) return;
+        setSaved(data);
+        setSavedCount(data.length);
+      })
       .catch((error: unknown) => !cancelled && setLoadError(error instanceof ApiError ? error.message : "Your saved searches didn't load."));
     return () => {
       cancelled = true;
@@ -74,10 +79,12 @@ export function SavedScreen() {
   async function remove(item: Saved) {
     setConfirming(null);
     setSaved((now) => (now ?? []).filter((s) => s.id !== item.id));
+    changeSavedCount(-1);
     try {
       await api(`/api/saved-briefs/${item.id}`, { method: "DELETE" });
     } catch {
       setSaved((now) => [item, ...(now ?? [])]);
+      changeSavedCount(1);
       setProblem({ id: item.id, message: "We couldn't delete that saved search. Please try again." });
     }
   }

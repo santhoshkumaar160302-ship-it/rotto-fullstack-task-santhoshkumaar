@@ -61,7 +61,7 @@ export function ProfilePanel({ personId, filters, onClose }: { personId: string;
 }
 
 function Profile({ person, filters }: { person: CandidateProfile; filters: Filters }) {
-  const wantedSkills: readonly string[] = filters.skills;
+  const wantedSkills: readonly string[] = [...filters.skills, ...(filters.skills_any ?? [])];
   const wantedTypes: readonly string[] = filters.company_types;
   const wantedCompanies: readonly string[] = filters.companies;
   const wantedSchools: readonly string[] = filters.schools;

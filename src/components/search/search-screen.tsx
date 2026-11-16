@@ -13,6 +13,9 @@ import { ResultRow } from "./result-row";
 import { FILTER_LABELS, filterValues, type FilterKey, type Filters, type Mention, type NewSearch, type SearchPage } from "./types";
 import { phraseFor, valuesOf, withValues } from "./filter-edit";
 import { ProfilePanel } from "./profile-panel";
+import { FilterBar } from "./filter-bar";
+import { Toast } from "../toast";
+import { changeSavedCount } from "@/lib/saved-count";
 import Link from "next/link";
 
 const PAGE_SIZE = 20;
@@ -74,6 +77,21 @@ export function SearchScreen() {
       cancelled = true;
     };
   }, [session, fromId, fromKey, pages]);
+
+  // Load the next page in the background while the recruiter reads this one,
+  // so "Next" shows it straight away. Paging never uses up a search.
+  const nextKey = searchId && current && page < current.total_pages ? `${searchId}:${page + 1}` : "";
+  const haveNext = nextKey !== "" && pages[nextKey] !== undefined;
+  useEffect(() => {
+    if (!session || !nextKey || haveNext) return;
+    let cancelled = false;
+    api<SearchPage>(`/api/search/${searchId}?page=${page + 1}`)
+      .then((data) => !cancelled && setPages((all) => ({ ...all, [nextKey]: data })))
+      .catch(() => {}); // it just loads normally when they click Next
+    return () => {
+      cancelled = true;
+    };
+  }, [session, searchId, page, nextKey, haveNext]);
 
   const freeUsed = plan?.plan === "free" && plan.searches_remaining === 0;
 
@@ -356,14 +374,21 @@ function Results({
   const [openId, setOpenId] = useState<string | null>(null); // whose profile is open
   const closeProfile = useCallback(() => setOpenId(null), []);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState("");
+  const [toast, setToast] = useState(false);
+  const closeToast = useCallback(() => setToast(false), []);
 
   async function saveSearch() {
     setSaveState("saving");
+    setSaveError("");
     try {
       await api("/api/saved-briefs", { method: "POST", body: { brief: data.brief, filters: data.filters, mentions: original.mentions } });
       setSaveState("saved");
-    } catch {
+      setToast(true);
+      changeSavedCount(1); // the number on the Saved tab goes up
+    } catch (error) {
       setSaveState("error");
+      setSaveError(error instanceof ApiError ? error.message : "Something went wrong. Please try again.");
     }
   }
   const from = (data.page - 1) * data.page_size + 1;
@@ -375,10 +400,34 @@ function Results({
         <button className="btn-text muted" onClick={onNew}>
           ← New search
         </button>
-        <button className="btn-text muted" onClick={() => onEdit(data.brief)}>
-          Edit brief
-        </button>
+        <span className="results-top-right">
+          <button className="btn-text muted" onClick={() => onEdit(data.brief)}>
+            Edit brief
+          </button>
+          {saveState === "saved" ? (
+            <Link href="/saved" className="btn-quiet save-done">
+              <SaveIcon filled /> Saved
+            </Link>
+          ) : (
+            <button className="btn-quiet" onClick={saveSearch} disabled={saveState === "saving"}>
+              <SaveIcon /> {saveState === "saving" ? "Saving…" : saveState === "error" ? "Try saving again" : "Save search"}
+            </button>
+          )}
+        </span>
       </div>
+      {saveState === "error" && (
+        <div className="alert" role="alert">
+          This search wasn&apos;t saved. {saveError}
+        </div>
+      )}
+      {toast && (
+        <Toast onClose={closeToast}>
+          <strong>Search saved.</strong>{" "}
+          <Link href="/saved" className="toast-link">
+            View saved searches
+          </Link>
+        </Toast>
+      )}
 
       <MarkedBrief
         brief={data.brief}
@@ -388,6 +437,7 @@ function Results({
         onChange={onChange}
         onReset={onReset}
       />
+      <FilterBar filters={data.filters} onChange={onChange} />
       {freePlan && !problem && <p className="muted brief-note">On the free plan, changing a filter runs a new search.</p>}
       {problem?.kind === "free-used" && (
         <div className="notice" role="status">
@@ -444,15 +494,6 @@ function Results({
                 <span className="muted">
                   {from}–{to} of {data.total}
                 </span>
-              )}
-              {saveState === "saved" ? (
-                <Link href="/saved" className="btn-quiet shorted">
-                  <SaveIcon filled /> Saved · View saved searches
-                </Link>
-              ) : (
-                <button className="btn-quiet" onClick={saveSearch} disabled={saveState === "saving"}>
-                  <SaveIcon /> {saveState === "saving" ? "Saving…" : saveState === "error" ? "Try saving again" : "Save search"}
-                </button>
               )}
             </span>
           </div>

@@ -35,6 +35,7 @@ export const FILTER_LABELS: Record<FilterKey, string> = {
   seniorities: "Seniority",
   cities: "City",
   skills: "Skill",
+  skills_any: "One of these skills",
   company_types: "Worked at",
   companies: "Employer",
   schools: "School",

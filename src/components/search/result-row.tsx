@@ -47,7 +47,7 @@ export function ResultRow({ person, filters, onOpen, selected }: { person: Candi
   // The filter lists hold exact allowed values; compare them as plain text here.
   const roles: readonly string[] = filters.roles;
   const cities: readonly string[] = filters.cities;
-  const wantedSkills: readonly string[] = filters.skills;
+  const wantedSkills: readonly string[] = [...filters.skills, ...(filters.skills_any ?? [])];
 
   const title = person.current_title ?? person.role;
   const titleTerms = [...filters.seniorities, ...(roles.includes(person.role) ? [person.role] : [])];

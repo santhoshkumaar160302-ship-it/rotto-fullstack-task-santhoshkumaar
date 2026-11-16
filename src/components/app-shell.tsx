@@ -10,6 +10,7 @@ import { useSession } from "@/lib/use-session";
 import { Logo } from "./logo";
 import { PlanBadge } from "./plan-badge";
 import { useShortlists } from "@/lib/shortlist-store";
+import { useSavedCount } from "@/lib/saved-count";
 import { MoonIcon, SavedIcon, SearchIcon, ShortlistIcon, SunIcon } from "./icons";
 
 const NAV = [
@@ -79,9 +80,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
   // Shortlists colleagues sent you that are waiting for an answer.
   const waiting = useShortlists().invites.length;
+  // How many saved searches there are, so a save visibly lands here.
+  const saved = useSavedCount(session !== null);
   const badge = (href: string) =>
     href === "/shortlists" && waiting > 0 ? (
       <span className="nav-badge" aria-label={`${waiting} waiting for you`}>{waiting}</span>
+    ) : href === "/saved" && saved ? (
+      <span className="nav-count" aria-label={`${saved} saved`}>{saved}</span>
     ) : null;
 
   // Hidden until we know someone is signed in, so a signed-out visitor never

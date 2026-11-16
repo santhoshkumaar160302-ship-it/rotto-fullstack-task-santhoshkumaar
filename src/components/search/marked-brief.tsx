@@ -59,7 +59,6 @@ export function MarkedBrief({
   onReset: (() => void) | null;
 }) {
   const [open, setOpen] = useState<{ key: FilterKey; slot: string } | null>(null);
-  const [adding, setAdding] = useState(false);
   const pieces = splitBrief(brief, mentions, original.unsupported);
   const placed = mentions.filter((m) => brief.toLowerCase().includes(m.phrase.toLowerCase()));
   const mentionedKeys = new Set(placed.map((m) => m.filter));
@@ -145,9 +144,6 @@ export function MarkedBrief({
     const added = now.filter((v) => !said.has(v));
     return added.length ? [{ key, values: added }] : [];
   });
-  const addable = (Object.keys(FILTER_LABELS) as FilterKey[]).filter(
-    (key) => valuesOf(filters, key).length === 0 && !mentionedKeys.has(key),
-  );
 
   return (
     <div className="brief-read">
@@ -159,54 +155,15 @@ export function MarkedBrief({
             {token(key, `x-${key}`, phraseFor(key, values))}
           </span>
         ))}
-        {adding && open?.slot.startsWith("add-") && (
-          <span>
-            , {CLAUSE[open.key]}
-            <span className="tw">
-              <span className="tok hl open">…</span>
-              <FilterPopover
-                filterKey={open.key}
-                filters={filters}
-                onApply={(v) => {
-                  setAdding(false);
-                  apply(open.key, v);
-                }}
-                onClose={() => {
-                  setAdding(false);
-                  setOpen(null);
-                }}
-              />
-            </span>
-          </span>
-        )}
       </div>
 
       <div className="brief-tools">
-        <span className="muted">Click a highlighted word to change it.</span>
+        <span className="muted">Click a highlighted word, or a filter below, to change the search.</span>
         <span className="brief-tools-right">
           {onReset && (
             <button type="button" className="btn-text" onClick={onReset}>
               Go back to my original brief
             </button>
-          )}
-          {addable.length > 0 && (
-            <span className="tw">
-              <button type="button" className="btn-quiet" aria-expanded={adding && !open} onClick={() => { setOpen(null); setAdding((a) => !a); }}>
-                + Add a filter
-              </button>
-              {adding && !open && (
-                <>
-                  <span className="pop-backdrop" onClick={() => setAdding(false)} aria-hidden="true" />
-                  <span className="pop pop-menu" role="menu">
-                    {addable.map((key) => (
-                      <button key={key} type="button" role="menuitem" className="pop-option" onClick={() => setOpen({ key, slot: `add-${key}` })}>
-                        {key === "min_years" ? "Minimum years of experience" : key === "max_years" ? "Maximum years of experience" : FILTER_LABELS[key]}
-                      </button>
-                    ))}
-                  </span>
-                </>
-              )}
-            </span>
           )}
         </span>
       </div>

@@ -42,6 +42,14 @@ const list = await (await api(acme, "POST", "/api/shortlists", { name: "Acme sec
 await api(acme, "POST", `/api/shortlists/${list.id}/people/cand_0001`);
 const saved = await (await api(acme, "POST", "/api/saved-briefs", { brief: "acme secret brief", filters: { skills: ["React"] } })).json();
 check(Boolean(list.id && saved.id), "setup: acme has a shortlist and a saved search");
+// And one finished search (written directly, so no Gemini call is needed).
+const acmeUser = JSON.parse(Buffer.from(acme.split(".")[1], "base64url").toString()).sub;
+const { data: acmeSearch } = await admin
+  .from("searches")
+  .insert({ company_id: "acme", created_by: acmeUser, brief: "acme secret search", filters: {}, result_ids: ["cand_0001", "cand_0002"] })
+  .select("id")
+  .single();
+check(Boolean(acmeSearch?.id), "setup: acme has a search");
 
 // ---------- A. Through our API, as globex ----------
 console.log("\nA. Through the API, as globex");
@@ -56,6 +64,17 @@ const gSaved = await (await api(globex, "GET", "/api/saved-briefs")).json();
 check(!gSaved.some((s: { id: string }) => s.id === saved.id), "cannot list acme's saved searches");
 check((await api(globex, "DELETE", `/api/saved-briefs/${saved.id}`)).status === 404, "cannot delete acme's saved search (404)");
 check((await api(globex, "GET", "/api/search/00000000-0000-0000-0000-000000000000?page=1")).status === 404, "unknown search id is 404");
+check((await api(globex, "GET", `/api/search/${acmeSearch!.id}?page=1`)).status === 404, "cannot page through acme's search (404)");
+check((await api(acme, "GET", `/api/search/${acmeSearch!.id}?page=1`)).status === 200, "acme can page through its own search (200)");
+check((await api("not-a-real-token", "GET", `/api/search/${acmeSearch!.id}?page=1`)).status === 401, "fake token on paging: 401");
+check((await fetch(`${APP}/api/search/${acmeSearch!.id}?page=1`)).status === 401, "no token on paging: 401");
+{
+  const { data } = await asUser(globex).rpc("get_search_page", { p_search_id: acmeSearch!.id, p_page: 1 });
+  check(data === null, "directly in Supabase, globex gets nothing from acme's search");
+  const anon = createClient(URL, PUBLISHABLE, { auth: { persistSession: false } });
+  const { error } = await anon.rpc("get_search_page", { p_search_id: acmeSearch!.id, p_page: 1 });
+  check(error !== null, "signed out, get_search_page is refused");
+}
 check((await fetch(`${APP}/api/shortlists`)).status === 401, "no token: 401");
 check((await api("not-a-real-token", "GET", "/api/plan")).status === 401, "fake token: 401");
 
@@ -153,6 +172,7 @@ check(count === 5000, `all 5000 candidates still there (${count})`);
 // ---------- Clean up ----------
 await admin.from("shortlists").delete().eq("id", list.id);
 await admin.from("saved_briefs").delete().eq("id", saved.id);
+if (acmeSearch) await admin.from("searches").delete().eq("id", acmeSearch.id);
 await admin.from("companies").update({ searches_used: 0 }).eq("id", "acme");
 
 console.log(failures === 0 ? "\nAll security checks passed." : `\n${failures} check(s) FAILED.`);
