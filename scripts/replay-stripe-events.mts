@@ -1,12 +1,14 @@
 // Replays data/stripe-events.json against POST /api/billing/events, exactly as
 // Stripe would deliver it, and checks each company's plan matches the file's
 // expected_plans_after. Also sends a tampered signature (must be 400).
-// Dev tool: needs `make dev` running. Resets local billing tables first.
+// Needs the app running. Resets the billing tables first.
+// Local: `make dev`, then `node scripts/replay-stripe-events.mts`.
+// Live site: APP_URL=https://... node --env-file=<live settings> scripts/replay-stripe-events.mts
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
 process.loadEnvFile(".env");
-const APP = "http://localhost:3000";
+const APP = process.env.APP_URL ?? "http://localhost:3000";
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!, {
   auth: { persistSession: false },
 });

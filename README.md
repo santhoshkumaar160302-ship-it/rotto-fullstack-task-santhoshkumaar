@@ -4,6 +4,8 @@ Candidate search for recruiters. Describe who you need in plain English, for exa
 
 **Live site:** https://rotto-fullstack-task-santhoshkumaar.vercel.app
 
+Sign in with `recruiter@globex.test` / `rotto-assessment` (paid plan, unlimited searches).
+
 ## Features
 
 - **Plain-English search:** the brief is turned into filters, and the words the app understood are highlighted.
@@ -25,8 +27,9 @@ Candidate search for recruiters. Describe who you need in plain English, for exa
 
 ## Live site
 
-- **Accounts:** `recruiter@acme.test` and `recruiter@globex.test`, password `rotto-assessment`. `recruiter2@acme.test` and `recruiter2@globex.test` (same password) are there for testing sharing.
-- **Plans:** both companies start on the free plan, with one search each, until Stripe events are sent to `/api/billing/events`. The webhook uses the same signing secret as the sample events in `data/stripe-events.json`.
+- **Account:** `recruiter@globex.test`, password `rotto-assessment`.
+- **Plan:** paid, with unlimited searches. It was upgraded by sending the sample Stripe events in `data/stripe-events.json` to the live webhook, the same way Stripe would.
+- **Sharing:** the live site has a single account, so sharing a shortlist with a colleague can only be tried locally, where each company has two accounts.
 - **Data:** the same 5,000 candidates and database migrations as the local setup.
 
 ## Getting started
@@ -75,6 +78,8 @@ Start the app with `make dev`, then run these in a second terminal.
 | `node scripts/test-security.mts` | 77 checks of company isolation, sharing, billing and hostile briefs, through the API and directly through Supabase |
 | `node scripts/replay-stripe-events.mts` | The Stripe webhook: signatures, duplicates, event order |
 | `npx tsx scripts/gemini-speed.mts` | Gemini's response time, and a comparison of two models |
+
+To send the sample Stripe events to a deployed site instead, set `APP_URL` and pass that site's settings: `APP_URL=https://... node --env-file=<settings file> scripts/replay-stripe-events.mts`.
 
 Gemini's free tier allows about 10 requests a minute per model. Add a pause between briefs to stay under it: `EVAL_DELAY_MS=7000 node scripts/eval-search.mts`.
 
